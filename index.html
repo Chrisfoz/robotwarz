@@ -121,10 +121,15 @@
             const loadingEl = document.getElementById('loading');
             
             try {
+                console.log('🔍 Starting game initialization...');
+                console.log('Canvas element exists?', document.getElementById('gameCanvas'));
+                
                 updateLoadingStatus('Creating game instance...');
                 const game = new BattleBotsGame();
+                window.gameInstance = game; // Make accessible for debugging
+                console.log('✅ Game instance created');
                 
-                updateLoadingStatus('Loading assets...');
+                updateLoadingStatus('Initializing game systems...');
                 await game.init();
                 
                 loadingEl.style.display = 'none';

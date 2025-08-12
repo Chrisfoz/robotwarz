@@ -39,32 +39,72 @@ class BattleBotsGame {
     }
 
     async init() {
-        console.log('🎮 Initializing Battle Bots: Arena Evolution...');
-        
-        this.setupCanvas();
-        this.initializeSystems();
-        this.initializeUI();
-        this.setupEventListeners();
-        
-        await this.loadAssets();
-        this.systems.save.loadGame();
-        
-        console.log('✅ Game initialized successfully!');
-        this.start();
+        try {
+            console.log('🎮 Initializing Battle Bots: Arena Evolution...');
+            console.log('📍 Current URL:', window.location.href);
+            console.log('📄 Document ready state:', document.readyState);
+            
+            // Wait for DOM if needed
+            if (document.readyState !== 'complete') {
+                await new Promise(resolve => window.addEventListener('load', resolve));
+            }
+            
+            this.setupCanvas();
+            this.initializeSystems();
+            this.initializeUI();
+            this.setupEventListeners();
+            
+            await this.loadAssets();
+            
+            // Only try to load save if we have localStorage
+            if (typeof localStorage !== 'undefined') {
+                this.systems.save.loadGame();
+            } else {
+                console.warn('⚠️ localStorage not available, save/load disabled');
+            }
+            
+            console.log('✅ Game initialized successfully!');
+            this.start();
+        } catch (error) {
+            console.error('❌ Failed to initialize game:', error);
+            console.error('Stack trace:', error.stack);
+            throw error;
+        }
     }
 
     setupCanvas() {
+        console.log('📐 Setting up canvas...');
+        
         this.canvas = document.getElementById('gameCanvas');
+        
         if (!this.canvas) {
+            console.log('⚠️ Canvas not found in HTML, creating new one...');
             this.canvas = document.createElement('canvas');
             this.canvas.id = 'gameCanvas';
             this.canvas.width = ARENA_CONFIG.WIDTH;
             this.canvas.height = ARENA_CONFIG.HEIGHT;
-            document.body.appendChild(this.canvas);
+            
+            const container = document.getElementById('game-container');
+            if (container) {
+                container.appendChild(this.canvas);
+            } else {
+                document.body.appendChild(this.canvas);
+            }
         }
         
+        if (!this.canvas) {
+            throw new Error('Failed to create or find canvas element');
+        }
+        
+        console.log('📐 Canvas found/created:', this.canvas);
+        
         this.ctx = this.canvas.getContext('2d');
+        if (!this.ctx) {
+            throw new Error('Failed to get 2D context from canvas');
+        }
+        
         this.ctx.imageSmoothingEnabled = false;
+        console.log('✅ Canvas setup complete');
     }
 
     initializeSystems() {
@@ -102,23 +142,36 @@ class BattleBotsGame {
     }
 
     initializeUI() {
-        this.ui = {
-            menu: new MenuUI(this.canvas, this.ctx),
-            hud: new HUD(this.canvas, this.ctx),
-            shop: new ShopUI(this.canvas, this.ctx),
-            lobby: new LobbyUI(this.canvas, this.ctx)
-        };
-
-        this.ui.menu.onPlaySingle = () => this.startSinglePlayer();
-        this.ui.menu.onPlayMultiplayer = () => this.showLobby();
-        this.ui.menu.onShowShop = () => this.showShop();
-        this.ui.menu.onShowSettings = () => this.showSettings();
+        console.log('🎨 Initializing UI systems...');
+        console.log('Canvas state:', { canvas: !!this.canvas, ctx: !!this.ctx });
         
-        this.ui.lobby.onStartGame = (config) => this.startMultiplayer(config);
-        this.ui.lobby.onBack = () => this.showMenu();
+        if (!this.canvas || !this.ctx) {
+            throw new Error('Canvas or context not initialized before UI setup');
+        }
         
-        this.ui.shop.onBack = () => this.showMenu();
-        this.ui.shop.onPurchase = (upgrade) => this.purchaseUpgrade(upgrade);
+        try {
+            this.ui = {
+                menu: new MenuUI(this.canvas, this.ctx),
+                hud: new HUD(this.canvas, this.ctx),
+                shop: new ShopUI(this.canvas, this.ctx),
+                lobby: new LobbyUI(this.canvas, this.ctx)
+            };
+            console.log('✅ UI systems initialized');
+            
+            this.ui.menu.onPlaySingle = () => this.startSinglePlayer();
+            this.ui.menu.onPlayMultiplayer = () => this.showLobby();
+            this.ui.menu.onShowShop = () => this.showShop();
+            this.ui.menu.onShowSettings = () => this.showSettings();
+            
+            this.ui.lobby.onStartGame = (config) => this.startMultiplayer(config);
+            this.ui.lobby.onBack = () => this.showMenu();
+            
+            this.ui.shop.onBack = () => this.showMenu();
+            this.ui.shop.onPurchase = (upgrade) => this.purchaseUpgrade(upgrade);
+        } catch (error) {
+            console.error('❌ Failed to initialize UI:', error);
+            throw error;
+        }
     }
 
     setupEventListeners() {
