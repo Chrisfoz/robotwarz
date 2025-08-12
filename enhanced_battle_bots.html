@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Bots: Arena Evolution</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #56CCF2;
+            text-shadow: 0 0 10px rgba(86, 204, 242, 0.5);
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        canvas {
+            border: 2px solid #3a4c67;
+            border-radius: 8px;
+            background: #0f1419;
+            cursor: crosshair;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+        }
+        
+        .panel {
+            background: rgba(26, 26, 46, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #3a4c67;
+        }
+        
+        .panel h3 {
+            margin-top: 0;
+            color: #56CCF2;
+        }
+        
+        .mode-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            background: #2c3e50;
+            color: #fff;
+            border: 1px solid #3a4c67;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .tab.active {
+            background: #56CCF2;
+            color: #1a1a2e;
+            border-color: #56CCF2;
+        }
+        
+        .tab:hover:not(.active) {
+            background: #34495e;
+            border-color: #56CCF2;
+        }
+        
+        select, button, input {
+            background: #2c3e50;
+            color: #fff;
+            border: 1px solid #3a4c67;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        
+        button:hover {
+            background: #34495e;
+            border-color: #56CCF2;
+        }
+        
+        button:disabled {
+            background: #1e2832;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .room-code {
+            background: #1e2832;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #56CCF2;
+            margin: 10px 0;
+        }
+        
+        .player-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .player-item {
+            background: #1e2832;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .customization-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .upgrade-item {
+            background: #1e2832;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #3a4c67;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .upgrade-item:hover {
+            border-color: #56CCF2;
+        }
+        
+        .upgrade-item.equipped {
+            border-color: #2ED573;
+            background: rgba(46, 213, 115, 0.1);
+        }
+        
+        .upgrade-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-cost {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            background: #F2C94C;
+            color: #1a1a2e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .stat-item {
+            background: #1e2832;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #56CCF2;
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: #95a5a6;
+        }
+        
+        .xp-bar {
+            background: #2c3e50;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .xp-fill {
+            background: linear-gradient(90deg, #F2C94C, #F2994A);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .currency {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+            color: #F2C94C;
+        }
+        
+        .badge {
+            background: rgba(26, 26, 46, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #3a4c67;
+            font-size: 12px;
+        }
+        
+        .badge strong {
+            color: #56CCF2;
+        }
+        
+        .progress {
+            background: #2c3e50;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        
+        .progress div {
+            background: linear-gradient(90deg, #56CCF2, #2F80ED);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .cooldowns {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        
+        .cd {
+            width: 60px;
+            height: 8px;
+            background: #2c3e50;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .cd .bar {
+            background: linear-gradient(90deg, #F2C94C, #F2994A);
+            height: 100%;
+            transition: width 0.2s ease;
+        }
+        
+        .label {
+            color: #95a5a6;
+            font-size: 10px;
+            margin-top: 5px;
+        }
+        
+        .notifications {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .notification {
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid #56CCF2;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            min-width: 250px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            border-color: #2ED573;
+            color: #2ED573;
+        }
+        
+        .notification.warning {
+            border-color: #F2C94C;
+            color: #F2C94C;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .hidden { display: none; }
+        
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .side-panel {
+                width: 100%;
+                max-width: 800px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 Battle Bots: Arena Evolution</h1>
+    
+    <div class="main-container">
+        <div class="game-area">
+            <canvas id="game" width="800" height="600" tabindex="0"></canvas>
+            
+            <div id="gameStatus" class="badge">
+                <div>Ready to battle!</div>
+            </div>
+            
+            <div id="playerStats" class="badge">
+                <div>Select a bot to begin</div>
+            </div>
+            
+            <div id="cooldowns" class="badge">
+                <div>Weapon cooldowns will appear here</div>
+            </div>
+        </div>
+        
+        <div class="side-panel">
+            <!-- Game Mode Selection -->
+            <div class="panel">
+                <div class="mode-tabs">
+                    <div class="tab active" data-mode="single">Single Player</div>
+                    <div class="tab" data-mode="multi">Multiplayer</div>
+                </div>
+                
+                <!-- Single Player Mode -->
+                <div id="singlePlayerMode">
+                    <select id="classSelect">
+                        <option value="titan">Titan - Heavy Tank</option>
+                        <option value="viper" selected>Viper - Speed Assassin</option>
+                        <option value="sniper">Sniper - Long Range</option>
+                    </select>
+                    <button id="startSingleBtn">Start Battle</button>
+                </div>
+                
+                <!-- Multiplayer Mode -->
+                <div id="multiplayerMode" class="hidden">
+                    <button id="hostGameBtn">Host Game</button>
+                    <input type="text" id="roomCodeInput" placeholder="Enter room code...">
+                    <button id="joinGameBtn">Join Game</button>
+                    
+                    <div id="lobbyArea" class="hidden">
+                        <div class="room-code">Room: <span id="currentRoomCode"></span></div>
+                        <div class="player-list" id="playerList"></div>
+                        <button id="startMultiBtn" class="hidden">Start Match</button>
+                        <button id="leaveRoomBtn">Leave Room</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bot Customization -->
+            <div class="panel">
+                <h3>🔧 Bot Customization</h3>
+                <div class="customization-grid" id="upgradeGrid"></div>
+            </div>
+            
+            <!-- Player Stats -->
+            <div class="panel">
+                <h3>📊 Player Progress</h3>
+                <div class="currency">
+                    💰 <span id="playerCredits">500</span> Credits
+                </div>
+                <div class="label">Level <span id="playerLevel">1</span></div>
+                <div class="xp-bar">
+                    <div class="xp-fill" id="xpBar" style="width: 20%"></div>
+                </div>
+                <div class="label"><span id="currentXP">200</span> / <span id="requiredXP">1000</span> XP</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalWins">12</div>
+                        <div class="stat-label">WINS</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalBattles">28</div>
+                        <div class="stat-label">BATTLES</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="winRate">43%</div>
+                        <div class="stat-label">WIN RATE</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalDamage">2.8K</div>
+                        <div class="stat-label">DAMAGE</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controls Guide -->
+            <div class="panel">
+                <h3>🎮 Controls</h3>
+                <div style="font-size: 11px; line-height: 1.4;">
+                    <div><strong>WASD</strong> - Move bot</div>
+                    <div><strong>Mouse</strong> - Aim direction</div>
+                    <div><strong>Left Click</strong> - Primary weapon</div>
+                    <div><strong>Right Click</strong> - Secondary weapon</div>
+                    <div><strong>Space</strong> - Special ability</div>
+                    <div><strong>R</strong> - Restart (single player)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notifications" id="notifications"></div>
+
+    <script>
+// Enhanced Battle Bots with Progression and Multiplayer
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // Game state
+  let gameMode = 'single'; // 'single' or 'multi'
+  let isHost = false;
+  let room = null;
+  let playerID = Math.random().toString(36).substr(2, 9);
+
+  // Mock multiplayer simulation (in real implementation, use WebRTC or Socket.io)
+  const mockMultiplayer = {
+    rooms: new Map(),
+    createRoom() {
+      const code = Math.random().toString(36).substr(2, 6).toUpperCase();
+      this.rooms.set(code, {
+        host: playerID,
+        players: [{ id: playerID, name: 'Player 1', ready: false }],
+        started: false
+      });
+      return code;
+    },
+    joinRoom(code) {
+      const room = this.rooms.get(code);
+      if (room && room.players.length < 4) {
+        room.players.push({ 
+          id: playerID, 
+          name: `Player ${room.players.length + 1}`, 
+          ready: false 
+        });
+        return room;
+      }
+      return null;
+    },
+    leaveRoom(code) {
+      const room = this.rooms.get(code);
+      if (room) {
+        room.players = room.players.filter(p => p.id !== playerID);
+        if (room.players.length === 0) {
+          this.rooms.delete(code);
+        }
+      }
+    }
+  };
+
+  // Player progression data
+  let playerData = {
+    level: 1,
+    xp: 200,
+    credits: 500,
+    wins: 12,
+    battles: 28,
+    totalDamage: 2800,
+    unlockedUpgrades: ['basic_armor', 'standard_engine', 'basic_weapon']
+  };
+
+  // Upgrade system
+  const upgrades = {
+    // Armor upgrades
+    basic_armor: { name: 'Basic Armor', cost: 0, type: 'armor', bonus: { armor: 0.05 }, unlocked: true },
+    reinforced_armor: { name: 'Reinforced', cost: 200, type: 'armor', bonus: { armor: 0.15, speed: -0.2 } },
+    reactive_armor: { name: 'Reactive', cost: 500, type: 'armor', bonus: { armor: 0.25, speed: -0.4 } },
+    
+    // Engine upgrades  
+    standard_engine: { name: 'Standard', cost: 0, type: 'engine', bonus: { speed: 0 }, unlocked: true },
+    turbo_engine: { name: 'Turbo', cost: 300, type: 'engine', bonus: { speed: 0.5, accel: 0.05 } },
+    stealth_engine: { name: 'Stealth', cost: 400, type: 'engine', bonus: { speed: 0.3, turn: 0.04 } },
+    
+    // Weapon upgrades
+    basic_weapon: { name: 'Standard', cost: 0, type: 'weapon', bonus: { damage: 0 }, unlocked: true },
+    enhanced_weapon: { name: 'Enhanced', cost: 250, type: 'weapon', bonus: { damage: 0.2, cd: 0.1 } },
+    overcharged_weapon: { name: 'Overcharged', cost: 600, type: 'weapon', bonus: { damage: 0.4, cd: 0.2 } },
+    
+    // Special upgrades
+    shield_gen: { name: 'Shield Gen', cost: 400, type: 'special', bonus: { maxHP: 20 } },
+    repair_kit: { name: 'Repair Kit', cost: 350, type: 'special', bonus: { regen: 1 } },
+    targeting_sys: { name: 'Auto-Target', cost: 450, type: 'special', bonus: { accuracy: 0.2 } }
+  };
+
+  let currentLoadout = {
+    armor: 'basic_armor',
+    engine: 'standard_engine', 
+    weapon: 'basic_weapon',
+    special: null
+  };
+
+  // UI Elements
+  const classSelect = document.getElementById('classSelect');
+  const startSingleBtn = document.getElementById('startSingleBtn');
+  const hostGameBtn = document.getElementById('hostGameBtn');
+  const joinGameBtn = document.getElementById('joinGameBtn');
+  const roomCodeInput = document.getElementById('roomCodeInput');
+  const gameStatusEl = document.getElementById('gameStatus');
+  const playerStatsEl = document.getElementById('playerStats');
+  const cooldownsEl = document.getElementById('cooldowns');
+
+  // Input handling
+  const keys = new Map();
+  const mouse = { x: 0, y: 0, downL: false, downR: false };
+
+  window.addEventListener('keydown', (e) => {
+    keys.set(e.key.toLowerCase(), true);
+    if (e.key.toLowerCase() === ' ') e.preventDefault();
+  });
+  window.addEventListener('keyup', (e) => keys.set(e.key.toLowerCase(), false));
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    mouse.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  });
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 0) mouse.downL = true;
+    if (e.button === 2) mouse.downR = true;
+  });
+  canvas.addEventListener('mouseup', (e) => {
+    if (e.button === 0) mouse.downL = false;
+    if (e.button === 2) mouse.downR = false;
+  });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // Utility functions
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const dist2 = (a, b) => {
+    const dx = a.x - b.x, dy = a.y - b.y; return dx*dx + dy*dy;
+  };
+  const angleTo = (a, b) => Math.atan2(b.y - a.y, b.x - a.x);
+
+  // Game systems
+  const teams = { PLAYER: 1, ENEMY: 2 };
+  let projectiles = [];
+  let hazards = [];
+  let effects = [];
+  let bots = [];
+  let player, enemy;
+  let last = 0; 
+  let running = false; 
+  let winState = 0;
+
+  const strengths = {
+    melee:   { armor: 1.2, shield: 0.9, speed: 1.0 },
+    ranged:  { armor: 0.9, shield: 1.2, speed: 1.0 },
+    emp:     { armor: 1.0, shield: 1.0, speed: 1.25 }
+  };
+
+  // Enhanced bot blueprints with upgrade slots
+  const BLUEPRINTS = {
+    titan: {
+      name: 'Titan',
+      speed: 2.2, accel: 0.18, turn: 0.12,
+      maxHP: 160, armor: 0.15, defense: 'armor',
+      primary: { kind: 'melee', name: 'Hammer', dmg: 24, cd: 0.7, range: 46, arc: Math.PI*0.9 },
+      secondary: { kind: 'ranged', name: 'Rocket', dmg: 34, cd: 2.2, speed: 6.0, spread: 0.06 },
+      ability: { name: 'Fortress', type: 'buff', cd: 12, dur: 6, effect: { dmgReduce: 0.5 } }
+    },
+    viper: {
+      name: 'Viper',
+      speed: 3.4, accel: 0.22, turn: 0.16,
+      maxHP: 110, armor: 0.05, defense: 'speed',
+      primary: { kind: 'melee', name: 'Plasma Blades', dmg: 14, cd: 0.25, range: 36, arc: Math.PI*1.2 },
+      secondary: { kind: 'ranged', name: 'Dart Gun', dmg: 9, cd: 0.12, speed: 9.0, spread: 0.03 },
+      ability: { name: 'Afterburner Dash', type: 'dash', cd: 6, dashSpeed: 9.0, dashTime: 0.2 }
+    },
+    sniper: {
+      name: 'Sniper',
+      speed: 2.6, accel: 0.18, turn: 0.14,
+      maxHP: 90, armor: 0.0, defense: 'shield',
+      primary: { kind: 'ranged', name: 'Railgun', dmg: 32, cd: 1.6, speed: 13.0, spread: 0.01, pierce: true },
+      secondary: { kind: 'ranged', name: 'Drone Shot', dmg: 10, cd: 0.35, speed: 8.5, spread: 0.02 },
+      ability: { name: 'Drone Strike', type: 'drone', cd: 10, dur: 6, fireRate: 0.45 }
+    }
+  };
+
+  // Apply upgrades to bot stats
+  function applyUpgrades(bot) {
+    Object.values(currentLoadout).forEach(upgradeKey => {
+      if (!upgradeKey) return;
+      const upgrade = upgrades[upgradeKey];
+      if (!upgrade) return;
+      
+      Object.entries(upgrade.bonus).forEach(([stat, value]) => {
+        if (stat === 'damage') {
+          bot.primary.dmg *= (1 + value);
+          bot.secondary.dmg *= (1 + value);
+        } else if (stat === 'cd') {
+          bot.primary.cd *= (1 - value);
+          bot.secondary.cd *= (1 - value);
+        } else if (bot[stat] !== undefined) {
+          bot[stat] += value;
+        }
+      });
+    });
+    
+    // Ensure reasonable bounds
+    bot.armor = clamp(bot.armor, 0, 0.8);
+    bot.speed = Math.max(0.5, bot.speed);
+    bot.maxHP = Math.max(50, bot.maxHP);
+    bot.hp = bot.maxHP;
+  }
+
+  // Enhanced Bot class
+  class Bot {
+    constructor(blueprint, x, y, team, ai=false) {
+      Object.assign(this, JSON.parse(JSON.stringify(blueprint)));
+      this.bp = blueprint;
+      this.x = x; this.y = y;
+      this.vx = 0; this.vy = 0;
+      this.team = team;
+      this.ai = ai;
+      this.hp = blueprint.maxHP;
+      this.dir = 0;
+      this.primaryCD = 0;
+      this.secondaryCD = 0;
+      this.abilityCD = 0;
+      this.abilityActiveTime = 0;
+      this.dashing = 0;
+      this.drone = null;
+      this.dead = false;
+      this.nameplate = blueprint.name;
+      this.damageDealt = 0;
+      
+      // Apply upgrades if this is the player bot
+      if (!ai) {
+        applyUpgrades(this);
+      }
+    }
+
+    update(dt, target) {
+      if (this.dead) return;
+      
+      // Cooldowns
+      this.primaryCD = Math.max(0, this.primaryCD - dt);
+      this.secondaryCD = Math.max(0, this.secondaryCD - dt);
+      this.abilityCD = Math.max(0, this.abilityCD - dt);
+      if (this.abilityActiveTime > 0) this.abilityActiveTime -= dt;
+      if (this.dashing > 0) this.dashing -= dt;
+      
+      // Drone tick
+      if (this.drone) this.drone.update(dt);
+
+      if (this.ai) this.runAI(dt, target);
+      else this.runPlayer(dt);
+
+      // Physics
+      this.x += this.vx * dt * 60;
+      this.y += this.vy * dt * 60;
+      
+      // Bounce off walls
+      const r = 18;
+      if (this.x < r) { this.x = r; this.vx *= -0.4; }
+      if (this.x > W-r) { this.x = W-r; this.vx *= -0.4; }
+      if (this.y < r) { this.y = r; this.vy *= -0.4; }
+      if (this.y > H-r) { this.y = H-r; this.vy *= -0.4; }
+    }
+
+    aimAt(x, y) { this.dir = Math.atan2(y - this.y, x - this.x); }
+    
+    takeDamage(dmg, type='ranged', source=null) {
+      if (this.dead) return;
+      
+      const originalDmg = dmg;
+      
+      // Ability damage reduction
+      if (this.abilityActiveTime > 0 && this.bp.ability.type === 'buff' && this.bp.ability.effect?.dmgReduce) {
+        dmg *= (1 - this.bp.ability.effect.dmgReduce);
+      }
+      
+      // Armor
+      dmg *= (1 - this.armor);
+      
+      // Strength/weakness system
+      const def = this.defense || 'armor';
+      const mult = strengths[type]?.[def] ?? 1.0;
+      dmg *= mult;
+      
+      this.hp -= dmg;
+      
+      // Track damage dealt for progression
+      if (source && !source.ai) {
+        source.damageDealt += originalDmg;
+      }
+      
+      effects.push(new HitSpark(this.x, this.y));
+      
+      if (this.hp <= 0) {
+        this.dead = true;
+        effects.push(new Boom(this.x, this.y));
+      }
+    }
+
+    tryPrimary(angle) {
+      if (this.primaryCD > 0 || this.dead) return;
+      const p = this.primary;
+      this.primaryCD = p.cd;
+      
+      if (p.kind === 'melee') {
+        effects.push(new Slash(this.x, this.y, angle, p.range));
+        for (const b of bots) {
+          if (b.team === this.team || b.dead) continue;
+          const d2 = dist2(this, b);
+          const inRange = d2 <= (p.range*p.range);
+          if (inRange) {
+            const angTo = angleTo(this, b);
+            const diff = Math.atan2(Math.sin(angTo - angle), Math.cos(angTo - angle));
+            if (Math.abs(diff) <= (p.arc * 0.5)) {
+              b.takeDamage(p.dmg, 'melee', this);
+            }
+          }
+        }
+      } else {
+        const spread = (p.spread || 0) * (Math.random() - 0.5) * 2;
+        const a = angle + spread;
+        const speed = p.speed || 8.0;
+        shootProjectile(this, this.x, this.y, a, speed, p.dmg, p.pierce ? 2 : 1, 'ranged');
+      }
+    }
+
+    trySecondary(angle) {
+      if (this.secondaryCD > 0 || this.dead) return;
+      const s = this.secondary;
+      this.secondaryCD = s.cd;
+      
+      if (s.kind === 'melee') {
+        effects.push(new Slash(this.x, this.y, angle, s.range || 40, 0.7));
+        for (const b of bots) {
+          if (b.team === this.team || b.dead) continue;
+          const d2 = dist2(this, b);
+          const inRange = d2 <= ((s.range || 40)**2);
+          if (inRange) b.takeDamage(s.dmg, 'melee', this);
+        }
+      } else {
+        const spread = (s.spread || 0) * (Math.random() - 0.5) * 2;
+        const a = angle + spread;
+        const speed = s.speed || 8.0;
+        shootProjectile(this, this.x, this.y, a, speed, s.dmg, 1, 'ranged');
+      }
+    }
+
+    tryAbility(angle) {
+      if (this.abilityCD > 0 || this.dead) return;
+      const ab = this.ability;
+      this.abilityCD = ab.cd;
+      
+      if (ab.type === 'buff') {
+        this.abilityActiveTime = ab.dur;
+        effects.push(new Aura(this));
+      } else if (ab.type === 'dash') {
+        this.dashing = ab.dashTime;
+        this.vx = Math.cos(angle) * ab.dashSpeed;
+        this.vy = Math.sin(angle) * ab.dashSpeed;
+        effects.push(new DashStreak(this));
+      } else if (ab.type === 'drone') {
+        this.abilityActiveTime = ab.dur;
+        this.drone = new Drone(this, ab.fireRate);
+      }
+    }
+
+    runPlayer(dt) {
+      // Movement
+      const forward = (keys.get('w')?1:0) - (keys.get('s')?1:0);
+      const strafe = (keys.get('d')?1:0) - (keys.get('a')?1:0);
+      
+      // Aim
+      this.aimAt(mouse.x, mouse.y);
+
+      // Acceleration
+      const ax = (strafe * this.speed);
+      const ay = (forward * this.speed);
+      const facing = this.dir;
+      const fx = Math.cos(facing)*ay;
+      const fy = Math.sin(facing)*ay;
+      const sx = Math.cos(facing + Math.PI/2)*ax;
+      const sy = Math.sin(facing + Math.PI/2)*ax;
+      const tx = fx + sx;
+      const ty = fy + sy;
+
+      const max = this.dashing>0 ? (this.bp.ability.dashSpeed || 8.5) : this.speed;
+      this.vx = clamp(this.vx + tx * this.accel, -max, max);
+      this.vy = clamp(this.vy + ty * this.accel, -max, max);
+
+      // Fire
+      if (mouse.downL) this.tryPrimary(this.dir);
+      if (mouse.downR) this.trySecondary(this.dir);
+      if (keys.get(' ') && this.abilityCD <= 0) this.tryAbility(this.dir);
+      if (keys.get('r') && gameMode === 'single') restart();
+    }
+
+    runAI(dt, target) {
+      if (!target || target.dead) return;
+      const a = angleTo(this, target);
+      this.aimAt(target.x, target.y);
+
+      let pref = this.primary.kind === 'melee' ? 48 : 260;
+      const d2v = dist2(this, target);
+      const d = Math.sqrt(d2v);
+      const toward = d > pref ? 1 : -1;
+
+      const ax = Math.cos(a) * this.speed * toward;
+      const ay = Math.sin(a) * this.speed * toward;
+      this.vx = clamp(this.vx + ax * this.accel, -this.speed, this.speed);
+      this.vy = clamp(this.vy + ay * this.accel, -this.speed, this.speed);
+
+      if (this.primary.kind === 'melee' && d < (this.primary.range + 10)) {
+        this.tryPrimary(a);
+      } else if (this.primary.kind !== 'melee' && d < 520) {
+        this.tryPrimary(a);
+      }
+      if (this.secondaryCD <= 0) this.trySecondary(a + rand(-0.2, 0.2));
+
+      if (this.abilityCD <= 0) {
+        if (this.ability.type === 'dash' && d < 220) this.tryAbility(a);
+        if (this.ability.type === 'buff' && d < 260) this.tryAbility(a);
+        if (this.ability.type === 'drone' && !this.drone) this.tryAbility(a);
+      }
+    }
+
+    draw() {
+      if (this.dead) return;
+      
+      // Bot chassis
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.dir);
+      
+      // Body with upgrade visual indicators
+      const armorUpgrade = upgrades[currentLoadout.armor];
+      let bodyColor = '#1f2a38';
+      if (armorUpgrade && armorUpgrade.name === 'Reinforced') bodyColor = '#2a3a48';
+      else if (armorUpgrade && armorUpgrade.name === 'Reactive') bodyColor = '#3a4a58';
+      
+      roundedRect(-18, -14, 36, 28, 6, bodyColor, '#3a4c67');
+      
+      // Weapon
+      ctx.fillStyle = '#97a8c9';
+      ctx.fillRect(6, -4, 20, 8);
+      ctx.fillStyle = '#c6d2ea';
+      ctx.fillRect(24, -3, 10, 6);
+      
+      // Class accent ring
+      ctx.strokeStyle = this.bp === BLUEPRINTS.titan ? '#eb5757' :
+                        this.bp === BLUEPRINTS.viper ? '#2f80ed' : '#f2c94c';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+
+      // HP bar
+      const w = 54, h = 5;
+      const hpPct = clamp(this.hp / this.maxHP, 0, 1);
+      drawBar(this.x - w/2, this.y - 34, w, h, hpPct, '#56CCF2', '#2F80ED');
+    }
+  }
+
+  // Keep all existing classes (Drone, Projectile, effects) unchanged...
+  class Drone {
+    constructor(owner, rate) {
+      this.o = owner;
+      this.rate = rate;
+      this.cd = 0;
+      this.t = 0;
+      this.r = 34;
+      this.dead = false;
+    }
+    update(dt) {
+      if (this.dead) return;
+      this.cd = Math.max(0, this.cd - dt);
+      this.t += dt;
+      this.x = this.o.x + Math.cos(this.t * 1.6) * this.r;
+      this.y = this.o.y + Math.sin(this.t * 1.6) * this.r;
+      if (this.cd <= 0) {
+        const target = bots.find(b => b.team !== this.o.team && !b.dead);
+        if (target) {
+          const a = angleTo({x:this.x,y:this.y}, target);
+          shootProjectile(this.o, this.x, this.y, a, 9.0, this.o.secondary.dmg, 1, 'ranged');
+          this.cd = this.rate;
+        }
+      }
+    }
+    draw() {
+      if (this.dead) return;
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.t*2);
+      roundedRect(-8, -6, 16, 12, 3, '#2b3752', '#657aa8');
+      ctx.restore();
+    }
+  }
+
+  class Projectile {
+    constructor(owner, x, y, a, speed, dmg, pierce=1, type='ranged') {
+      this.owner = owner;
+      this.x = x; this.y = y;
+      this.vx = Math.cos(a) * speed;
+      this.vy = Math.sin(a) * speed;
+      this.dmg = dmg;
+      this.pierce = pierce;
+      this.type = type;
+      this.dead = false;
+      this.life = 3.0;
+    }
+    update(dt) {
+      if (this.dead) return;
+      this.life -= dt;
+      if (this.life <= 0) this.dead = true;
+      this.x += this.vx * dt * 60;
+      this.y += this.vy * dt * 60;
+      if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.dead = true;
+
+      for (const b of bots) {
+        if (b.team === this.owner.team || b.dead) continue;
+        const d2v = dist2(this, b);
+        if (d2v < 20*20) {
+          b.takeDamage(this.dmg, this.type, this.owner);
+          effects.push(new HitSpark(this.x, this.y));
+          this.pierce -= 1;
+          if (this.pierce <= 0) { this.dead = true; break; }
+        }
+      }
+    }
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Math.atan2(this.vy, this.vx));
+      roundedRect(-6, -2, 12, 4, 2, '#c9d7f2', '#91a8df');
+      ctx.restore();
+    }
+  }
+
+  function shootProjectile(owner, x, y, a, speed, dmg, pierce, type) {
+    projectiles.push(new Projectile(owner, x, y, a, speed, dmg, pierce, type));
+  }
+
+  // Effect classes (unchanged from original)
+  class HitSpark {
+    constructor(x,y){ this.x=x; this.y=y; this.t=0; this.dead=false; }
+    update(dt){ this.t+=dt; if(this.t>0.2) this.dead=true; }
+    draw(){ ctx.fillStyle='rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(this.x,this.y,3,0,Math.PI*2); ctx.fill(); }
+  }
+  class Boom {
+    constructor(x,y){ this.x=x; this.y=y; this.t=0; this.dead=false; }
+    update(dt){ this.t+=dt; if(this.t>0.8) this.dead=true; }
+    draw(){
+      const r= clamp(this.t*120,0,60);
+      ctx.beginPath(); ctx.arc(this.x,this.y,r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(235,87,87,${1-this.t})`; ctx.fill();
+    }
+  }
+  class Slash {
+    constructor(x,y,ang,range,alpha=1){ this.x=x; this.y=y; this.ang=ang; this.r=range; this.t=0; this.a=alpha; this.dead=false; }
+    update(dt){ this.t+=dt; if(this.t>0.2) this.dead=true; }
+    draw(){
+      ctx.save();
+      ctx.translate(this.x,this.y);
+      ctx.rotate(this.ang);
+      ctx.strokeStyle=`rgba(255,255,255,${1-this.t})`;
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.arc(0,0,this.r, -0.7, 0.7);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  class Aura {
+    constructor(host){ this.h=host; this.t=0; this.dead=false; }
+    update(dt){ this.t+=dt; if(this.h.abilityActiveTime<=0) this.dead=true; }
+    draw(){
+      ctx.beginPath();
+      ctx.arc(this.h.x, this.h.y, 28 + Math.sin(this.t*6)*2, 0, Math.PI*2);
+      ctx.strokeStyle='rgba(187,107,217,.6)';
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+  }
+  class DashStreak {
+    constructor(host){ this.h=host; this.t=0; this.dead=false; }
+    update(dt){ this.t+=dt; if(this.t>0.25) this.dead=true; }
+    draw(){
+      ctx.save();
+      ctx.globalAlpha = 0.6*(1-this.t/0.25);
+      ctx.fillStyle='#2f80ed';
+      ctx.beginPath();
+      ctx.ellipse(this.h.x - Math.cos(this.h.dir)*16, this.h.y - Math.sin(this.h.dir)*16, 28, 10, this.h.dir, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function roundedRect(x,y,w,h,r,fill,stroke){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    if (fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke){ ctx.strokeStyle = stroke; ctx.stroke(); }
+  }
+
+  function drawBar(x,y,w,h,pct,c1,c2){
+    ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.strokeRect(x,y,w,h);
+    const ww = Math.floor(w * pct);
+    const grad = ctx.createLinearGradient(x, y, x+w, y);
+    grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+    ctx.fillStyle = grad; ctx.fillRect(x,y,ww,h);
+  }
+
+  // Arena system (unchanged from original)
+  function drawArena(){
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.strokeStyle = '#3a4154';
+    ctx.lineWidth = 1;
+    const step = 48;
+    for (let x=0; x<=W; x+=step){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y=0; y<=H; y+=step){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    for (const hz of hazards) {
+      ctx.save();
+      ctx.translate(hz.x, hz.y);
+      ctx.rotate(hz.phase);
+      ctx.fillStyle = '#232a3a';
+      ctx.beginPath();
+      for (let i=0;i<6;i++){
+        ctx.rotate(Math.PI/3);
+        ctx.moveTo(0,0); ctx.lineTo(18,4); ctx.lineTo(34,0); ctx.lineTo(18,-4); ctx.closePath();
+      }
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function spawnHazards(){
+    hazards = [];
+    for (let i=0;i<4;i++){
+      hazards.push({x: rand(140, W-140), y: rand(120, H-120), phase: rand(0, Math.PI*2)});
+    }
+  }
+
+  function updateHazards(dt){
+    for (const hz of hazards) {
+      hz.phase += dt*2.2;
+      for (const b of bots){
+        if (b.dead) continue;
+        const d2v = (b.x - hz.x)**2 + (b.y - hz.y)**2;
+        if (d2v < 36*36) {
+          b.takeDamage(8, 'melee');
+          const a = angleTo(hz,b);
+          b.vx += Math.cos(a)*-0.6;
+          b.vy += Math.sin(a)*-0.6;
+        }
+      }
+    }
+  }
+
+  // Game state management
+  function startMatch(bpKey){
+    projectiles = [];
+    effects = [];
+    spawnHazards();
+    bots = [];
+    
+    player = new Bot(BLUEPRINTS[bpKey], W*0.25, H*0.5, teams.PLAYER, false);
+    const keys = Object.keys(BLUEPRINTS).filter(k => k !== bpKey);
+    const enemyKey = keys[Math.floor(Math.random()*keys.length)];
+    enemy = new Bot(BLUEPRINTS[enemyKey], W*0.75, H*0.5, teams.ENEMY, true);
+    enemy.nameplate = BLUEPRINTS[enemyKey].name + ' (AI)';
+    
+    bots.push(player, enemy);
+    running = true; 
+    winState = 0;
+    gameStatusEl.textContent = `You: ${BLUEPRINTS[bpKey].name} vs AI: ${BLUEPRINTS[enemyKey].name}`;
+  }
+
+  function restart(){
+    if (!player) return;
+    startMatch(player.bp === BLUEPRINTS.titan ? 'titan' :
+               player.bp === BLUEPRINTS.viper ? 'viper' : 'sniper');
+  }
+
+  function endMatch(won) {
+    running = false;
+    
+    // Award XP and credits
+    let xpGained = won ? 100 : 50;
+    let creditsGained = won ? 75 : 25;
+    
+    // Bonus for damage dealt
+    if (player) {
+      xpGained += Math.floor(player.damageDealt / 10);
+      creditsGained += Math.floor(player.damageDealt / 20);
+    }
+    
+    playerData.xp += xpGained;
+    playerData.credits += creditsGained;
+    playerData.battles++;
+    if (won) playerData.wins++;
+    if (player) playerData.totalDamage += player.damageDealt;
+    
+    // Level up check
+    const requiredXP = playerData.level * 1000;
+    if (playerData.xp >= requiredXP) {
+      playerData.level++;
+      playerData.xp -= requiredXP;
+      showNotification(`Level Up! You are now level ${playerData.level}`, 'success');
+      
+      // Unlock new upgrades
+      unlockUpgrades();
+    }
+    
+    updateProgressUI();
+    showNotification(`Match ended! +${xpGained} XP, +${creditsGained} credits`, won ? 'success' : 'warning');
+  }
+
+  function unlockUpgrades() {
+    const level = playerData.level;
+    const toUnlock = [];
+    
+    if (level >= 2 && !playerData.unlockedUpgrades.includes('reinforced_armor')) {
+      toUnlock.push('reinforced_armor');
+    }
+    if (level >= 3 && !playerData.unlockedUpgrades.includes('turbo_engine')) {
+      toUnlock.push('turbo_engine');
+    }
+    if (level >= 4 && !playerData.unlockedUpgrades.includes('enhanced_weapon')) {
+      toUnlock.push('enhanced_weapon');
+    }
+    if (level >= 5 && !playerData.unlockedUpgrades.includes('shield_gen')) {
+      toUnlock.push('shield_gen');
+    }
+    
+    toUnlock.forEach(upgrade => {
+      playerData.unlockedUpgrades.push(upgrade);
+      upgrades[upgrade].unlocked = true;
+      showNotification(`New upgrade unlocked: ${upgrades[upgrade].name}!`, 'success');
+    });
+    
+    if (toUnlock.length > 0) {
+      updateUpgradeUI();
+    }
+  }
+
+  // UI Management
+  function updateProgressUI() {
+    document.getElementById('playerCredits').textContent = playerData.credits;
+    document.getElementById('playerLevel').textContent = playerData.level;
+    document.getElementById('totalWins').textContent = playerData.wins;
+    document.getElementById('totalBattles').textContent = playerData.battles;
+    document.getElementById('totalDamage').textContent = (playerData.totalDamage / 1000).toFixed(1) + 'K';
+    document.getElementById('winRate').textContent = Math.round((playerData.wins / Math.max(1, playerData.battles)) * 100) + '%';
+    
+    const requiredXP = playerData.level * 1000;
+    document.getElementById('currentXP').textContent = playerData.xp;
+    document.getElementById('requiredXP').textContent = requiredXP;
+    document.getElementById('xpBar').style.width = (playerData.xp / requiredXP * 100) + '%';
+  }
+
+  function updateUpgradeUI() {
+    const grid = document.getElementById('upgradeGrid');
+    grid.innerHTML = '';
+    
+    Object.entries(upgrades).forEach(([key, upgrade]) => {
+      const item = document.createElement('div');
+      item.className = 'upgrade-item';
+      
+      const isEquipped = Object.values(currentLoadout).includes(key);
+      const isUnlocked = playerData.unlockedUpgrades.includes(key) || upgrade.unlocked;
+      const canAfford = playerData.credits >= upgrade.cost;
+      
+      if (isEquipped) item.classList.add('equipped');
+      if (!isUnlocked || !canAfford) item.classList.add('locked');
+      
+      item.innerHTML = `
+        <div style="font-weight: bold; font-size: 11px;">${upgrade.name}</div>
+        <div style="font-size: 9px; color: #95a5a6;">${upgrade.type.toUpperCase()}</div>
+        ${upgrade.cost > 0 ? `<div class="upgrade-cost">${upgrade.cost}</div>` : ''}
+      `;
+      
+      item.addEventListener('click', () => {
+        if (!isUnlocked) {
+          showNotification('Upgrade locked! Level up to unlock.', 'warning');
+          return;
+        }
+        
+        if (upgrade.cost > 0 && !playerData.unlockedUpgrades.includes(key)) {
+          if (playerData.credits >= upgrade.cost) {
+            playerData.credits -= upgrade.cost;
+            playerData.unlockedUpgrades.push(key);
+            showNotification(`Purchased ${upgrade.name}!`, 'success');
+            updateProgressUI();
+          } else {
+            showNotification('Not enough credits!', 'warning');
+            return;
+          }
+        }
+        
+        // Equip/unequip
+        if (isEquipped) {
+          // Unequip (set to basic version)
+          const basicVersions = { armor: 'basic_armor', engine: 'standard_engine', weapon: 'basic_weapon', special: null };
+          currentLoadout[upgrade.type] = basicVersions[upgrade.type];
+        } else {
+          currentLoadout[upgrade.type] = key;
+        }
+        
+        updateUpgradeUI();
+        showNotification(`${isEquipped ? 'Unequipped' : 'Equipped'} ${upgrade.name}`, 'success');
+      });
+      
+      grid.appendChild(item);
+    });
+  }
+
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.getElementById('notifications').appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  function renderHUD(){
+    if (!player) return;
+    
+    const pct = clamp(player.hp / player.maxHP, 0, 1);
+    playerStatsEl.innerHTML = `
+      <div><strong>${player.nameplate}</strong></div>
+      <div>HP: ${Math.max(0, player.hp|0)} / ${player.maxHP}</div>
+      <div class="progress"><div style="width:${(pct*100).toFixed(1)}%"></div></div>
+      <div class="label">Damage Dealt: ${player.damageDealt.toFixed(0)}</div>
+    `;
+
+    cooldownsEl.innerHTML = `
+      <div>Cooldowns</div>
+      <div class="cooldowns">
+        <div class="cd"><div class="bar" style="width:${(100 - (player.primaryCD/player.primary.cd)*100)}%"></div></div>
+        <div class="cd"><div class="bar" style="width:${(100 - (player.secondaryCD/player.secondary.cd)*100)}%"></div></div>
+        <div class="cd"><div class="bar" style="width:${(100 - (player.abilityCD/player.ability.cd)*100)}%"></div></div>
+      </div>
+      <div class="label">Primary • Secondary • Ability</div>
+    `;
+  }
+
+  function step(t){
+    const dt = Math.min(0.033, (t - last) / 1000 || 0);
+    last = t;
+
+    if (running){
+      updateHazards(dt);
+      for (const b of bots) b.update(dt, b === enemy ? player : enemy);
+      for (const p of projectiles) p.update(dt);
+      for (const fx of effects) fx.update(dt);
+
+      projectiles = projectiles.filter(p => !p.dead);
+      effects = effects.filter(fx => !fx.dead);
+
+      if (player && player.dead && winState===0){ winState=-1; endMatch(false); }
+      if (enemy && enemy.dead && winState===0){ winState=1; endMatch(true); }
+    }
+
+    // Render
+    ctx.clearRect(0,0,W,H);
+    drawArena();
+    for (const fx of effects) fx.draw();
+    for (const p of projectiles) p.draw();
+    for (const b of bots) b.draw();
+
+    if (winState!==0){
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,.45)';
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 32px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(winState>0 ? 'VICTORY!' : 'DEFEAT!', W/2, H/2);
+      ctx.font = '14px system-ui';
+      ctx.fillText('Battle ended. Check your progression!', W/2, H/2 + 32);
+      ctx.restore();
+    }
+
+    renderHUD();
+    requestAnimationFrame(step);
+  }
+
+  // Event listeners
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      gameMode = tab.dataset.mode;
+      
+      if (gameMode === 'single') {
+        document.getElementById('singlePlayerMode').classList.remove('hidden');
+        document.getElementById('multiplayerMode').classList.add('hidden');
+      } else {
+        document.getElementById('singlePlayerMode').classList.add('hidden');
+        document.getElementById('multiplayerMode').classList.remove('hidden');
+      }
+    });
+  });
+
+  startSingleBtn.addEventListener('click', () => {
+    startMatch(classSelect.value);
+    canvas.focus();
+  });
+
+  hostGameBtn.addEventListener('click', () => {
+    const roomCode = mockMultiplayer.createRoom();
+    room = mockMultiplayer.rooms.get(roomCode);
+    isHost = true;
+    
+    document.getElementById('currentRoomCode').textContent = roomCode;
+    document.getElementById('lobbyArea').classList.remove('hidden');
+    document.getElementById('startMultiBtn').classList.remove('hidden');
+    
+    updatePlayerList();
+    showNotification(`Room created: ${roomCode}`, 'success');
+  });
+
+  joinGameBtn.addEventListener('click', () => {
+    const code = roomCodeInput.value.toUpperCase();
+    room = mockMultiplayer.joinRoom(code);
+    
+    if (room) {
+      isHost = false;
+      document.getElementById('currentRoomCode').textContent = code;
+      document.getElementById('lobbyArea').classList.remove('hidden');
+      updatePlayerList();
+      showNotification(`Joined room: ${code}`, 'success');
+    } else {
+      showNotification('Room not found!', 'warning');
+    }
+  });
+
+  document.getElementById('leaveRoomBtn').addEventListener('click', () => {
+    if (room) {
+      mockMultiplayer.leaveRoom(document.getElementById('currentRoomCode').textContent);
+      room = null;
+      isHost = false;
+      document.getElementById('lobbyArea').classList.add('hidden');
+      showNotification('Left room', 'info');
+    }
+  });
+
+  function updatePlayerList() {
+    const list = document.getElementById('playerList');
+    list.innerHTML = '';
+    
+    if (room) {
+      room.players.forEach(player => {
+        const item = document.createElement('div');
+        item.className = 'player-item';
+        item.innerHTML = `
+          <span>${player.name}</span>
+          <span style="color: #2ED573;">Ready</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+  }
+
+  // Initialize
+  updateProgressUI();
+  updateUpgradeUI();
+  spawnHazards();
+  startMatch('viper');
+  requestAnimationFrame(step);
+})();
+    </script>
+</body>
+</html>
