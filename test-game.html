@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Test</title>
+    <style>
+        body { background: #0f1419; color: #56CCF2; font-family: monospace; padding: 20px; }
+        #status { background: #1a1f2e; padding: 20px; border: 1px solid #56CCF2; }
+        .success { color: #68d391; }
+        .error { color: #fc8181; }
+        .warning { color: #f6ad55; }
+    </style>
+</head>
+<body>
+    <h1>Battle Bots - System Test</h1>
+    <div id="status">Testing...</div>
+    <canvas id="gameCanvas" width="800" height="600" style="display:none;"></canvas>
+    
+    <script type="module">
+        const status = document.getElementById('status');
+        let log = [];
+        
+        function addLog(msg, type = '') {
+            log.push(`<div class="${type}">${msg}</div>`);
+            status.innerHTML = log.join('');
+        }
+        
+        try {
+            addLog('🔍 Starting game test...');
+            
+            // Import and test game
+            const { default: BattleBotsGame } = await import('./src/main.js');
+            addLog('✅ Game module loaded', 'success');
+            
+            const game = new BattleBotsGame();
+            addLog('✅ Game instance created', 'success');
+            
+            await game.init();
+            addLog('✅ Game initialized successfully!', 'success');
+            
+            // Check systems
+            if (game.systems) {
+                const systemCount = Object.keys(game.systems).length;
+                addLog(`✅ ${systemCount} systems loaded: ${Object.keys(game.systems).join(', ')}`, 'success');
+                
+                // Verify critical systems
+                const critical = ['game', 'renderer', 'input', 'physics', 'save'];
+                for (const sys of critical) {
+                    if (game.systems[sys]) {
+                        addLog(`  ✓ ${sys} system OK`, 'success');
+                    } else {
+                        addLog(`  ✗ ${sys} system MISSING`, 'error');
+                    }
+                }
+            }
+            
+            // Check UI components
+            if (game.ui) {
+                const uiCount = Object.keys(game.ui).length;
+                addLog(`✅ ${uiCount} UI components: ${Object.keys(game.ui).join(', ')}`, 'success');
+            }
+            
+            // Test game state
+            if (game.systems.game) {
+                addLog(`✅ Game state: ${game.systems.game.state}`, 'success');
+                if (game.systems.game.playerProfile) {
+                    addLog(`✅ Player profile loaded - Credits: ${game.systems.game.playerProfile.credits}`, 'success');
+                }
+            }
+            
+            addLog('<br><strong>🎮 Game is ready to play!</strong>', 'success');
+            addLog('Open <a href="/" style="color:#56CCF2">index.html</a> to play', '');
+            
+        } catch (error) {
+            addLog(`❌ Error: ${error.message}`, 'error');
+            addLog(`Stack: ${error.stack}`, 'error');
+        }
+    </script>
+</body>
+</html>

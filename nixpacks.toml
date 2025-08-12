@@ -1,0 +1,34 @@
+# Nixpacks configuration for Battle Bots: Arena Evolution
+# This configuration optimizes static file serving for a real-time HTML5 game
+
+[phases.setup]
+# Install Node.js and necessary packages
+nixPkgs = ["nodejs-18_x", "yarn"]
+
+[phases.install]
+# Install serve globally for static file serving
+cmds = ["npm install -g serve@14"]
+
+[phases.build]
+# No build step needed - static files are ready to serve
+cmds = ["echo 'No build required - static HTML5 game'"]
+
+[start]
+# Use serve with optimized settings for static game hosting
+# --single: Fallback to index.html for client-side routing
+# --cors: Enable CORS for ES6 modules and potential CDN resources
+# --no-clipboard: Disable clipboard feature (not needed in production)
+# -l $PORT: Listen on Railway's assigned port
+cmd = "serve . -l $PORT --single --cors --no-clipboard"
+
+[staticAssets]
+# Configure static asset handling
+paths = [
+  "index.html",
+  "src/**/*",
+  "test-game.html"
+]
+
+[variables]
+# Environment variables (Railway will override PORT automatically)
+NODE_ENV = "production"

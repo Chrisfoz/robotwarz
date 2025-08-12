@@ -121,7 +121,7 @@ class BattleBotsGame {
             physics: new Physics(),
             collision: new CollisionSystem(),
             combat: new CombatSystem(),
-            effects: new EffectsSystem(),
+            effects: new EffectsSystem(this.canvas),  // Pass canvas to EffectsSystem
             projectiles: new ProjectileSystem(),
             hazards: new HazardSystem(),
             particles: new ParticleSystem(),

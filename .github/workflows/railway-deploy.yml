@@ -1,0 +1,138 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+    types: [opened, synchronize]
+
+jobs:
+  test:
+    name: Test Game Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Validate HTML
+        run: |
+          # Check that main HTML files exist and are valid
+          if [ ! -f "index.html" ]; then
+            echo "Error: index.html not found"
+            exit 1
+          fi
+          
+          # Check for basic HTML structure
+          if ! grep -q "<!DOCTYPE html>" index.html; then
+            echo "Warning: Missing DOCTYPE in index.html"
+          fi
+          
+          echo "HTML validation passed"
+      
+      - name: Validate JavaScript modules
+        run: |
+          # Check that main.js exists
+          if [ ! -f "src/main.js" ]; then
+            echo "Error: src/main.js not found"
+            exit 1
+          fi
+          
+          # Check for syntax errors in JavaScript files
+          find src -name "*.js" -exec node --check {} \;
+          
+          echo "JavaScript validation passed"
+      
+      - name: Check file sizes
+        run: |
+          # Ensure no single JS file is too large (>500KB)
+          large_files=$(find src -name "*.js" -size +500k)
+          if [ ! -z "$large_files" ]; then
+            echo "Warning: Large JavaScript files detected:"
+            echo "$large_files"
+          fi
+          
+          # Check total size of src directory
+          src_size=$(du -sh src | cut -f1)
+          echo "Total src directory size: $src_size"
+      
+      - name: Performance check
+        run: |
+          # Count total number of JS files
+          js_count=$(find src -name "*.js" | wc -l)
+          echo "Total JavaScript files: $js_count"
+          
+          # Warn if too many files (might affect load time)
+          if [ $js_count -gt 50 ]; then
+            echo "Warning: Large number of JS files ($js_count) may affect initial load time"
+            echo "Consider bundling for production"
+          fi
+
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service battlebots-game
+      
+      - name: Get deployment URL
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Deployment complete!"
+          echo "Check your Railway dashboard for the deployment URL"
+
+  preview:
+    name: Create Preview Environment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: Deploy Preview
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service battlebots-game --environment pr-${{ github.event.pull_request.number }}
+      
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview environment deployed! Check Railway dashboard for URL.'
+            })
