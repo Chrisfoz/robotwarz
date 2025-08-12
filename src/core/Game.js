@@ -12,26 +12,28 @@ import { SaveManager } from '../systems/SaveManager.js';
 export class Game {
     constructor(canvas) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        this.ctx = canvas ? canvas.getContext('2d') : null;
         this.width = GAME_CONFIG.CANVAS_WIDTH;
         this.height = GAME_CONFIG.CANVAS_HEIGHT;
         
-        // Set canvas size
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
+        // Set canvas size if available
+        if (this.canvas) {
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+        }
         
         // Game state
         this.state = GAME_STATES.MENU;
         this.previousState = null;
         this.paused = false;
         
-        // Core systems
-        this.renderer = new Renderer(this.ctx, this.width, this.height);
-        this.inputHandler = new InputHandler(this.canvas);
-        this.physics = new Physics();
-        this.collisionSystem = new CollisionSystem();
-        this.effectsSystem = new EffectsSystem();
-        this.saveManager = new SaveManager();
+        // Core systems (will be set via initialize method)
+        this.renderer = null;
+        this.inputHandler = null;
+        this.physics = null;
+        this.collisionSystem = null;
+        this.effectsSystem = null;
+        this.saveManager = null;
         
         // Game entities
         this.bots = [];
@@ -42,7 +44,7 @@ export class Game {
         // Player data
         this.player = null;
         this.playerBot = null;
-        this.playerProfile = this.saveManager.loadProfile();
+        this.playerProfile = null; // Will be loaded after saveManager is set
         
         // Match data
         this.matchData = {
@@ -66,25 +68,57 @@ export class Game {
         this.accumulator = 0;
         this.running = false;
         
-        // Initialize
+        // Note: init() will be called after systems are initialized
+    }
+
+    initialize(systems) {
+        // Set all the system references
+        this.renderer = systems.renderer;
+        this.inputHandler = systems.input;
+        this.physics = systems.physics;
+        this.collisionSystem = systems.collision;
+        this.effectsSystem = systems.effects;
+        this.saveManager = systems.save || new SaveManager();
+        
+        // Now that systems are set, initialize the game
         this.init();
     }
 
     init() {
         // Load saved data
-        this.playerProfile = this.saveManager.loadProfile();
+        if (this.saveManager) {
+            this.playerProfile = this.saveManager.loadProfile();
+        } else {
+            // Default profile if save manager not available
+            this.playerProfile = {
+                credits: 1000,
+                xp: 0,
+                level: 1,
+                totalMatches: 0,
+                wins: 0,
+                losses: 0,
+                botUpgrades: {}
+            };
+        }
         
         // Set up input handlers
         this.setupInputHandlers();
         
-        // Initialize renderer
-        this.renderer.init();
+        // Initialize renderer if it has an init method
+        if (this.renderer && this.renderer.init) {
+            this.renderer.init();
+        }
         
         // Start menu
         this.changeState(GAME_STATES.MENU);
     }
 
     setupInputHandlers() {
+        if (!this.inputHandler) {
+            console.warn('InputHandler not available, skipping input setup');
+            return;
+        }
+        
         // Mouse/touch movement
         this.inputHandler.on('move', (x, y) => {
             if (this.state === GAME_STATES.PLAYING && this.playerBot) {

@@ -108,9 +108,15 @@ class BattleBotsGame {
     }
 
     initializeSystems() {
+        console.log('⚙️ Initializing game systems...');
+        
+        if (!this.canvas || !this.ctx) {
+            throw new Error('Canvas must be initialized before systems');
+        }
+        
         this.systems = {
-            game: new Game(),
-            renderer: new Renderer(this.ctx),
+            game: new Game(this.canvas),  // Pass canvas to Game constructor
+            renderer: new Renderer(this.ctx, ARENA_CONFIG.WIDTH, ARENA_CONFIG.HEIGHT),
             input: new InputHandler(this.canvas),
             physics: new Physics(),
             collision: new CollisionSystem(),
@@ -137,7 +143,8 @@ class BattleBotsGame {
             progression: this.systems.progression,
             upgrades: this.systems.upgrades,
             abilities: this.systems.abilities,
-            input: this.systems.input
+            input: this.systems.input,
+            save: this.systems.save
         });
     }
 
