@@ -1,0 +1,17 @@
+{
+  "name": "battlebots-signaling-server",
+  "version": "1.0.0",
+  "description": "WebRTC signaling server for Battle Bots multiplayer",
+  "type": "module",
+  "main": "signaling-server.js",
+  "scripts": {
+    "start": "node signaling-server.js",
+    "dev": "node --watch signaling-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
