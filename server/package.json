@@ -9,7 +9,7 @@
     "dev": "node --watch signaling-server.js"
   },
   "dependencies": {
-    "ws": "^8.14.2"
+    "ws": "^8.18.3"
   },
   "engines": {
     "node": ">=14.0.0"

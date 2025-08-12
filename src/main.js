@@ -411,27 +411,42 @@ class BattleBotsGame {
     async showLobby() {
         this.gameState = 'LOBBY';
         
-        // Create room and get code
-        const roomCode = await webRTCManager.createRoom();
-        this.ui.lobby.setRoomCode(roomCode);
+        try {
+            // Try to create room with WebRTC
+            const roomCode = await webRTCManager.createRoom();
+            this.ui.lobby.setRoomCode(roomCode);
+            
+            // Handle peer connections
+            webRTCManager.on('peerJoined', (peerId) => {
+                this.ui.lobby.addPlayer(peerId);
+            });
+            
+            webRTCManager.on('peerLeft', (peerId) => {
+                this.ui.lobby.removePlayer(peerId);
+            });
+        } catch (error) {
+            console.warn('⚠️ Multiplayer not available:', error.message);
+            console.log('💡 You can still play single-player mode!');
+            // Show lobby anyway for local play
+            this.ui.lobby.setRoomCode('LOCAL');
+        }
+        
         this.ui.lobby.show();
-        
-        // Handle peer connections
-        webRTCManager.on('peerJoined', (peerId) => {
-            this.ui.lobby.addPlayer(peerId);
-        });
-        
-        webRTCManager.on('peerLeft', (peerId) => {
-            this.ui.lobby.removePlayer(peerId);
-        });
     }
     
     async joinLobby(roomCode) {
         this.gameState = 'LOBBY';
         
-        // Join existing room
-        await webRTCManager.joinRoom(roomCode);
-        this.ui.lobby.setRoomCode(roomCode);
+        try {
+            // Join existing room
+            await webRTCManager.joinRoom(roomCode);
+            this.ui.lobby.setRoomCode(roomCode);
+        } catch (error) {
+            console.warn('⚠️ Could not join multiplayer room:', error.message);
+            console.log('💡 Starting local game instead');
+            this.ui.lobby.setRoomCode('LOCAL');
+        }
+        
         this.ui.lobby.show();
     }
 

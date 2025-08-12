@@ -45,12 +45,23 @@ export class WebRTCManager {
     /**
      * Connect to signaling server
      */
-    async connectToSignalingServer(serverUrl = 'wss://battlebots-signaling.herokuapp.com') {
+    async connectToSignalingServer(serverUrl = 'ws://localhost:3001') {
         return new Promise((resolve, reject) => {
+            // Add timeout to prevent hanging
+            const timeout = setTimeout(() => {
+                if (this.signalingServer) {
+                    this.signalingServer.close();
+                }
+                reject(new Error('Connection timeout - signaling server not available'));
+            }, 3000);
+            
             try {
+                // Try local server first, then fall back to not using multiplayer
+                console.log('📡 Attempting to connect to signaling server...');
                 this.signalingServer = new WebSocket(serverUrl);
                 
                 this.signalingServer.onopen = () => {
+                    clearTimeout(timeout);
                     console.log('✅ Connected to signaling server');
                     this.connectionState = 'connected';
                     this.sendToSignalingServer({
@@ -65,16 +76,21 @@ export class WebRTCManager {
                 };
                 
                 this.signalingServer.onerror = (error) => {
-                    console.error('❌ Signaling server error:', error);
-                    reject(error);
+                    clearTimeout(timeout);
+                    console.warn('⚠️ Signaling server not available - multiplayer disabled');
+                    reject(new Error('Signaling server not available'));
                 };
                 
                 this.signalingServer.onclose = () => {
                     console.log('🔌 Disconnected from signaling server');
                     this.connectionState = 'disconnected';
-                    this.attemptReconnect();
+                    // Don't attempt reconnect if initial connection failed
+                    if (this.reconnectAttempts > 0) {
+                        this.attemptReconnect();
+                    }
                 };
             } catch (error) {
+                clearTimeout(timeout);
                 reject(error);
             }
         });
