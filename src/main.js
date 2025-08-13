@@ -441,6 +441,13 @@ class BattleBotsGame {
             arena: 'classic',
             timeLimit: 300
         });
+
+        // Show quick objective and controls guidance in-game
+        if (this.ui?.hud?.addNotification) {
+            const killsToWin = this.systems.game?.objective?.killsToWin ?? 5;
+            this.ui.hud.addNotification(`Objective: First to ${killsToWin} kills`, '🎯', '#56CCF2');
+            this.ui.hud.addNotification('Move: WASD/Click • Fire: Left Click • Alt: Right Click • Ability: Space • Pause: ESC • Menu: M', '🕹️');
+        }
     }
 
     async startMultiplayer(config) {

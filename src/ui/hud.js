@@ -335,6 +335,11 @@ export class HUDSystem {
             `K: ${this.gameData.kills || 0} / D: ${this.gameData.deaths || 0}`,
             x, y + 15
         );
+
+        // Objective hint
+        if (this.gameData.objective && this.gameData.objective.killsToWin) {
+            ctx.fillText(`Objective: First to ${this.gameData.objective.killsToWin} kills`, x, y + 30);
+        }
     }
     
     renderAbilities() {
@@ -610,7 +615,7 @@ export class HUDSystem {
         ctx.fillStyle = this.colors.text;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('Menu', x + w / 2, y + h / 2);
+        ctx.fillText('Back', x + w / 2, y + h / 2);
 
         // Cache rect for hit-testing this frame
         this._backBtnRect = { x, y, w, h };

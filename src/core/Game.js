@@ -58,6 +58,12 @@ export class Game {
             xpEarned: 0
         };
         
+        // Match objective and pacing
+        this.objective = { killsToWin: 5 };
+        this.damageScale = 0.6; // reduce damage to lengthen fights
+        this.respawnDelays = { player: 3000, ai: 2000 };
+        this.respawnTimers = [];
+        
         // Multiplayer
         this.isMultiplayer = false;
         this.roomCode = null;
@@ -402,7 +408,7 @@ export class Game {
                 if (bot !== this.playerBot && bot.isAlive()) {
                     const distance = this.playerBot.distanceTo(bot);
                     if (distance < meleeRange) {
-                        const damage = this.playerBot.currentStats.meleeDamage;
+                        const damage = Math.round(this.playerBot.currentStats.meleeDamage * this.damageScale);
                         const damageDealt = bot.takeDamage(damage, 'melee');
                         
                         if (damageDealt > 0) {
@@ -436,6 +442,9 @@ export class Game {
                 mousePos.y - this.playerBot.y,
                 mousePos.x - this.playerBot.x
             );
+
+            // Scale damage for pacing
+            const damage = Math.round(this.playerBot.currentStats.rangedDamage * this.damageScale);
             
             // Create projectile based on bot class
             if (this.playerBot.className === 'SNIPER') {
@@ -443,7 +452,7 @@ export class Game {
                     this.playerBot.x,
                     this.playerBot.y,
                     angle,
-                    this.playerBot.currentStats.rangedDamage,
+                    damage,
                     this.playerBot.id
                 );
                 this.projectiles.push(projectile);
@@ -452,7 +461,7 @@ export class Game {
                     this.playerBot.x,
                     this.playerBot.y,
                     angle,
-                    this.playerBot.currentStats.rangedDamage,
+                    damage,
                     this.playerBot.id
                 );
                 this.projectiles.push(...projectiles);
@@ -461,7 +470,7 @@ export class Game {
                     this.playerBot.x,
                     this.playerBot.y,
                     angle,
-                    this.playerBot.currentStats.rangedDamage,
+                    damage,
                     10,
                     this.playerBot.id,
                     'bullet'
@@ -510,10 +519,19 @@ export class Game {
         // Add death explosion
         this.effectsSystem.addExplosion(victim.x, victim.y);
         
-        // Check for match end
-        const aliveBots = this.bots.filter(bot => bot.isAlive());
-        if (aliveBots.length === 1) {
+        // Victory condition: first to objective.killsToWin (player-centric)
+        const killsToWin = this.objective?.killsToWin || 5;
+        if (killer === this.playerBot && killer.stats.kills >= killsToWin) {
             this.changeState(GAME_STATES.GAME_OVER);
+            return;
+        }
+
+        // Respawn logic to keep action going
+        if (victim === this.playerBot) {
+            this.matchData.deaths++;
+            this.scheduleRespawn('player', victim.className, this.respawnDelays.player);
+        } else {
+            this.scheduleRespawn('ai', victim.className, this.respawnDelays.ai);
         }
     }
 
@@ -533,6 +551,12 @@ export class Game {
 
     endMatch() {
         this.matchData.endTime = Date.now();
+
+        // Clear respawn timers
+        if (this.respawnTimers?.length) {
+            this.respawnTimers.forEach(t => clearTimeout(t));
+            this.respawnTimers = [];
+        }
         
         // Calculate final rewards
         if (this.playerBot && this.playerBot.isAlive()) {
@@ -656,7 +680,7 @@ export class Game {
         // Combat
         if (distance < 50 && bot.canUseMelee()) {
             bot.useMelee();
-            const damageDealt = nearestEnemy.takeDamage(bot.currentStats.meleeDamage, 'melee');
+            const damageDealt = nearestEnemy.takeDamage(Math.round(bot.currentStats.meleeDamage * this.damageScale), 'melee');
             bot.stats.damageDealt += damageDealt;
             
             if (!nearestEnemy.isAlive()) {
@@ -664,15 +688,15 @@ export class Game {
             }
         } else if (distance < 200 && bot.canUseRanged()) {
             bot.useRanged();
-            const projectile = new Projectile(
-                bot.x,
-                bot.y,
-                angle,
-                bot.currentStats.rangedDamage,
-                8,
-                bot.id,
-                'bullet'
-            );
+                const projectile = new Projectile(
+                    bot.x,
+                    bot.y,
+                    angle,
+                    Math.round(bot.currentStats.rangedDamage * this.damageScale),
+                    8,
+                    bot.id,
+                    'bullet'
+                );
             this.projectiles.push(projectile);
         }
         
@@ -697,6 +721,33 @@ export class Game {
         });
         
         return nearest;
+    }
+
+    // Schedule a bot respawn to extend match duration
+    scheduleRespawn(type, className, delay = 2000) {
+        const timer = setTimeout(() => {
+            if (this.state !== GAME_STATES.PLAYING) return;
+            const x = Math.random() * this.width;
+            const y = Math.random() * this.height;
+
+            const upgradeKey = className?.toLowerCase() || 'titan';
+            const upgrades = (this.playerProfile?.botUpgrades?.[upgradeKey]) || [];
+
+            const bot = new Bot(
+                x,
+                y,
+                className || 'TITAN',
+                type === 'player' ? 'player' : `ai_${Math.floor(Math.random() * 10000)}`,
+                upgrades
+            );
+
+            if (type === 'player') {
+                this.playerBot = bot;
+            } 
+            this.bots.push(bot);
+        }, delay);
+
+        this.respawnTimers.push(timer);
     }
 
     render() {
@@ -842,6 +893,7 @@ export class Game {
             state: this.state,
             arenaWidth: this.width,
             arenaHeight: this.height,
+            objective: { killsToWin: this.objective?.killsToWin || 5 },
             bots: botsState,
             playerBot: this.playerBot || null,
             // Optional fields used by HUD; provide safe defaults
