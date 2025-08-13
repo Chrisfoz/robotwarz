@@ -11,15 +11,37 @@ export class WebRTCManager {
         this.signalingServer = null;
         this.messageHandlers = new Map();
         
-        // WebRTC configuration
+        // WebRTC configuration with STUN and TURN servers
         this.rtcConfig = {
             iceServers: [
+                // STUN servers
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
                 { urls: 'stun:stun2.l.google.com:19302' },
                 { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' }
-            ]
+                { urls: 'stun:stun4.l.google.com:19302' },
+                
+                // Public TURN servers for better NAT traversal
+                // Note: These are public servers with limited reliability
+                // Consider using your own TURN server for production
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ],
+            iceCandidatePoolSize: 10, // Pre-gather ICE candidates for faster connection
+            iceTransportPolicy: 'all' // Use both STUN and TURN
         };
         
         this.connectionState = 'disconnected';
@@ -48,13 +70,13 @@ export class WebRTCManager {
      */
     async connectToSignalingServer(serverUrl) {
         return new Promise((resolve, reject) => {
-            // Add timeout to prevent hanging
+            // Add timeout to prevent hanging (increased for TURN server negotiation)
             const timeout = setTimeout(() => {
                 if (this.signalingServer) {
                     this.signalingServer.close();
                 }
                 reject(new Error('Connection timeout - signaling server not available'));
-            }, 3000);
+            }, 5000);
             
             try {
                 // Try local server first, then fall back to not using multiplayer
@@ -222,6 +244,14 @@ export class WebRTCManager {
         const pc = new RTCPeerConnection(this.rtcConfig);
         this.peers.set(peerId, pc);
         
+        // Set up connection timeout (increased for TURN server negotiation)
+        const connectionTimeout = setTimeout(() => {
+            if (pc.connectionState !== 'connected' && pc.connectionState !== 'connecting') {
+                console.warn(`⏱️ Connection timeout with ${peerId}`);
+                this.handleConnectionFailure(peerId);
+            }
+        }, 15000); // 15 seconds for TURN server connections
+        
         // Set up data channel (only offerer creates; answerer listens)
         if (createOffer) {
             const dataChannel = pc.createDataChannel('gameData', {
@@ -250,9 +280,11 @@ export class WebRTCManager {
         pc.onconnectionstatechange = () => {
             console.log(`Connection state with ${peerId}: ${pc.connectionState}`);
             if (pc.connectionState === 'connected') {
+                clearTimeout(connectionTimeout);
                 this.onPeerConnected(peerId);
-            } else if (pc.connectionState === 'failed') {
-                this.onPeerDisconnected(peerId);
+            } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+                clearTimeout(connectionTimeout);
+                this.handleConnectionFailure(peerId);
             }
         };
         
@@ -461,6 +493,30 @@ export class WebRTCManager {
     onPeerDisconnected(peerId) {
         console.log(`❌ Peer disconnected: ${peerId}`);
         this.removePeerConnection(peerId);
+    }
+    
+    /**
+     * Handle connection failure with retry logic
+     */
+    handleConnectionFailure(peerId) {
+        console.warn(`⚠️ Connection failed with ${peerId}`);
+        
+        // Clean up the failed connection
+        this.removePeerConnection(peerId);
+        
+        // Notify UI or game logic about connection failure
+        const handler = this.messageHandlers.get('connectionFailed');
+        if (handler) {
+            handler({ peerId, reason: 'Connection failed or timed out' });
+        }
+        
+        // If we're the host and a peer failed to connect, remove them from the room
+        if (this.isHost && this.signalingServer && this.signalingServer.readyState === WebSocket.OPEN) {
+            this.sendToSignalingServer({
+                type: 'removePeer',
+                peerId: peerId
+            });
+        }
     }
 
     /**
