@@ -97,6 +97,14 @@ export class InputHandler {
             case 'arrowright':
                 this.emit('moveRight');
                 break;
+            case 'q':
+                event.preventDefault();
+                this.emit('primaryAttack');  // Q for melee attack
+                break;
+            case 'e':
+                event.preventDefault();
+                this.emit('secondaryAttack');  // E for ranged attack
+                break;
         }
     }
 
@@ -112,16 +120,13 @@ export class InputHandler {
         this.mouse.buttons.add(event.button);
         
         if (event.button === 0) { // Left click
-            this.emit('primaryAttack');
+            // Emit move for click-to-move
+            this.emit('move', this.mouse.x, this.mouse.y);
+            // Also emit click for UI
+            this.emit('click', this.mouse.x, this.mouse.y);
         } else if (event.button === 2) { // Right click
             this.emit('secondaryAttack');
         }
-        
-        // Also emit move event for click-to-move
-        this.emit('move', this.mouse.x, this.mouse.y);
-
-        // Generic click event for UI hit-testing
-        this.emit('click', this.mouse.x, this.mouse.y);
     }
 
     handleMouseUp(event) {

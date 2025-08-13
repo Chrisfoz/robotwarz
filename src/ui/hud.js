@@ -583,10 +583,10 @@ export class HUDSystem {
         ctx.font = this.fonts.tiny;
         ctx.fillStyle = this.colors.textDim;
         const lines = [
-            'Move: WASD or Click',
+            'Move: WASD / Click',
             'Aim: Mouse',
-            'Primary: Left Click',
-            'Secondary: Right Click',
+            'Melee: Q',
+            'Ranged: E',
             'Ability: Space',
             'Pause: ESC',
             'Menu: M'

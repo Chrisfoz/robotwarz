@@ -273,20 +273,30 @@ export class Game {
             this.bots.push(this.playerBot);
 
             if (!isMultiplayer) {
-                for (let i = 0; i < 3; i++) {
-                    const aiClasses = ['TITAN', 'VIPER', 'SNIPER', 'STRIKER'];
+                // Start with fewer, easier AI bots for better pacing
+                const numAI = 2; // Start with 2 instead of 3
+                const aiClasses = ['TITAN', 'VIPER', 'STRIKER']; // Remove SNIPER (too hard early)
+                
+                for (let i = 0; i < numAI; i++) {
                     const randomClass = aiClasses[Math.floor(Math.random() * aiClasses.length)];
-                const aiBot = new Bot(
-                    Math.random() * this.width,
-                    Math.random() * this.height,
-                    randomClass,
-                    `ai_${i}`
-                );
-                this.bots.push(aiBot);
-                // Give AI an initial target so they begin moving immediately
-                if (this.playerBot) {
-                    aiBot.setTarget(this.playerBot.x, this.playerBot.y);
-                }
+                    // Spawn AI further from player
+                    const angle = (Math.PI * 2 * i) / numAI;
+                    const distance = 250; // Far from player start
+                    const aiX = this.width / 2 + Math.cos(angle) * distance;
+                    const aiY = this.height / 2 + Math.sin(angle) * distance;
+                    
+                    const aiBot = new Bot(
+                        Math.max(50, Math.min(this.width - 50, aiX)),
+                        Math.max(50, Math.min(this.height - 50, aiY)),
+                        randomClass,
+                        `ai_${i}`
+                    );
+                    this.bots.push(aiBot);
+                    // Don't immediately target player - give breathing room
+                    aiBot.setTarget(
+                        Math.random() * this.width,
+                        Math.random() * this.height
+                    );
                 }
             }
         }
@@ -757,7 +767,7 @@ export class Game {
         // Render based on game state
         switch (this.state) {
             case GAME_STATES.MENU:
-                this.renderer.renderMenu();
+                // Menu rendering handled by main.js MenuSystem
                 break;
             case GAME_STATES.BOT_SELECT:
                 this.renderer.renderBotSelect(this.playerProfile);

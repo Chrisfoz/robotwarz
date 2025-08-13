@@ -18,6 +18,7 @@ import { MenuSystem as MenuUI } from './ui/menu.js';
 import { HUDSystem as HUD } from './ui/hud.js';
 import { ShopSystem as ShopUI } from './ui/shop.js';
 import { LobbySystem as LobbyUI } from './ui/lobby.js';
+import { TutorialSystem } from './ui/Tutorial.js';
 import performanceMonitor from './utils/PerformanceMonitor.js';
 import componentDamageSystem from './systems/ComponentDamage.js';
 import screenShake from './systems/ScreenShake.js';
@@ -164,7 +165,8 @@ class BattleBotsGame {
                 menu: new MenuUI(this.canvas),
                 hud: new HUD(this.canvas),
                 shop: new ShopUI(this.canvas),
-                lobby: new LobbyUI(this.canvas)
+                lobby: new LobbyUI(this.canvas),
+                tutorial: new TutorialSystem(this.canvas)
             };
             console.log('✅ UI systems initialized');
             
@@ -309,6 +311,12 @@ class BattleBotsGame {
                 
                 const interpolation = this.accumulator / fixedDeltaTime;
                 this.render(interpolation);
+                
+                // Render tutorial overlay if active
+                if (this.ui.tutorial) {
+                    this.ui.tutorial.update(deltaTime);
+                    this.ui.tutorial.render();
+                }
                 break;
                 
             case 'PAUSED':
@@ -430,23 +438,30 @@ class BattleBotsGame {
         if (this.ui?.menu?.deactivate) this.ui.menu.deactivate();
         this.gameState = 'PLAYING';
         
-        this.systems.game.startMatch({
-            mode: 'deathmatch',
-            players: [
-                { id: 'player1', botClass: 'TITAN', isAI: false },
-                { id: 'bot1', botClass: 'VIPER', isAI: true },
-                { id: 'bot2', botClass: 'SNIPER', isAI: true },
-                { id: 'bot3', botClass: 'PHANTOM', isAI: true }
-            ],
-            arena: 'classic',
-            timeLimit: 300
-        });
-
-        // Show quick objective and controls guidance in-game
-        if (this.ui?.hud?.addNotification) {
-            const killsToWin = this.systems.game?.objective?.killsToWin ?? 5;
-            this.ui.hud.addNotification(`Objective: First to ${killsToWin} kills`, '🎯', '#56CCF2');
-            this.ui.hud.addNotification('Move: WASD/Click • Fire: Left Click • Alt: Right Click • Ability: Space • Pause: ESC • Menu: M', '🕹️');
+        // Use the corrected spawn logic from Game.js
+        this.systems.game.startMatch('TITAN', false);
+        
+        // Check if tutorial should be shown
+        if (this.ui.tutorial && this.ui.tutorial.shouldShowTutorial()) {
+            console.log('📚 Starting tutorial for new player...');
+            this.ui.tutorial.start();
+            
+            // Set up tutorial completion callback
+            this.ui.tutorial.onComplete = () => {
+                console.log('✅ Tutorial completed!');
+                // Show objective after tutorial
+                if (this.ui?.hud?.addNotification) {
+                    const killsToWin = this.systems.game?.objective?.killsToWin ?? 8;
+                    this.ui.hud.addNotification(`Objective: First to ${killsToWin} kills wins!`, '🎯', '#56CCF2');
+                }
+            };
+        } else {
+            // Show quick objective and controls for returning players
+            if (this.ui?.hud?.addNotification) {
+                const killsToWin = this.systems.game?.objective?.killsToWin ?? 8;
+                this.ui.hud.addNotification(`Objective: First to ${killsToWin} kills`, '🎯', '#56CCF2');
+                this.ui.hud.addNotification('Move: WASD/Click • Melee: Q • Ranged: E • Ability: Space', '🕹️');
+            }
         }
     }
 
@@ -545,7 +560,6 @@ class BattleBotsGame {
             this.ui.lobby.setRoomCode('LOCAL');
         }
         
-        this.ui.lobby.activate();
         this.ui.lobby.activate();
     }
     
