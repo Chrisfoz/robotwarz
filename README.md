@@ -10,7 +10,7 @@ Battle Bots: Arena Evolution is an action-packed arena combat game where players
 
 ### ✨ Key Features
 
-- **3 Unique Bot Classes**: Titan (Tank), Viper (Speed), and Sniper (Range)
+- *Unique Bot Classes**: Titan (Tank), Viper (Speed), and Sniper (Range)
 - **Progressive Customization**: Unlock and equip upgrades that actually change gameplay
 - **Physics-Based Combat**: Realistic projectile physics with ricochets and momentum transfer
 - **Multiplayer Ready**: Host rooms and invite friends with shareable codes
