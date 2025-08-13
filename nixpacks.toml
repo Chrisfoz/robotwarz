@@ -17,14 +17,6 @@ cmds = ["echo 'No build required - static HTML5 game'"]
 # Run combined HTTP static server + WebSocket signaling on the same PORT
 cmd = "node server/full-server.js"
 
-[staticAssets]
-# Configure static asset handling
-paths = [
-  "index.html",
-  "src/**/*",
-  "test-game.html"
-]
-
 [variables]
 # Environment variables (Railway will override PORT automatically)
 NODE_ENV = "production"
