@@ -207,25 +207,17 @@ class BattleBotsGame {
     async loadAssets() {
         console.log('📦 Loading assets...');
         
-        const assetsToLoad = [
-            { type: 'data', path: '/assets/data/bots.json' },
-            { type: 'data', path: '/assets/data/upgrades.json' },
-            { type: 'data', path: '/assets/data/abilities.json' }
-        ];
-
-        for (const asset of assetsToLoad) {
-            try {
-                if (asset.type === 'data') {
-                    const response = await fetch(asset.path);
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log(`✅ Loaded: ${asset.path}`);
-                    }
-                }
-            } catch (error) {
-                console.warn(`⚠️ Failed to load ${asset.path}:`, error);
-            }
-        }
+        // Currently no external assets to load
+        // All game data is defined in constants.js
+        // This method is kept for future asset loading (sprites, sounds, etc.)
+        
+        // Example for future use:
+        // const assetsToLoad = [
+        //     { type: 'image', path: '/assets/sprites/bot.png' },
+        //     { type: 'sound', path: '/assets/sounds/explosion.mp3' }
+        // ];
+        
+        console.log('✅ Assets loaded (using built-in constants)');
     }
 
     start() {
