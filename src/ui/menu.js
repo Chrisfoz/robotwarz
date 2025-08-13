@@ -107,6 +107,11 @@ export class MenuSystem {
         this.transitionProgress = 0;
         this.isTransitioning = false;
         
+        // Logo images
+        this.logo = null;
+        this.carnage = null;
+        this.loadLogo();
+        
         // Visual settings
         this.colors = {
             background: '#0f1419',
@@ -158,6 +163,28 @@ export class MenuSystem {
         // Additional UI elements
         this.notifications = [];
         this.tooltips = new Map();
+    }
+    
+    loadLogo() {
+        // Load battle bot logo
+        this.logo = new Image();
+        this.logo.onload = () => {
+            console.log('✅ Menu logo loaded');
+        };
+        this.logo.onerror = () => {
+            console.warn('⚠️ Failed to load menu logo');
+        };
+        this.logo.src = 'battle bot logo.png';
+        
+        // Load carnage image
+        this.carnage = new Image();
+        this.carnage.onload = () => {
+            console.log('✅ Carnage decoration loaded');
+        };
+        this.carnage.onerror = () => {
+            console.warn('⚠️ Failed to load carnage decoration');
+        };
+        this.carnage.src = 'Carnage.png';
     }
     
     createBackgroundParticles() {
@@ -443,6 +470,31 @@ export class MenuSystem {
         if (!menu) return;
         
         const ctx = this.ctx;
+        
+        // Draw logo in top-left corner if loaded (main menu only)
+        if (menuName === 'MAIN' && this.logo && this.logo.complete) {
+            ctx.save();
+            ctx.globalAlpha = 0.8;
+            const logoScale = 0.15;
+            const logoWidth = this.logo.naturalWidth * logoScale;
+            const logoHeight = this.logo.naturalHeight * logoScale;
+            ctx.drawImage(this.logo, 20, 20, logoWidth, logoHeight);
+            ctx.restore();
+        }
+        
+        // Draw carnage decoration in bottom-right corner
+        if (this.carnage && this.carnage.complete) {
+            ctx.save();
+            ctx.globalAlpha = 0.2;
+            const carnageScale = 0.2;
+            const carnageWidth = this.carnage.naturalWidth * carnageScale;
+            const carnageHeight = this.carnage.naturalHeight * carnageScale;
+            ctx.drawImage(this.carnage, 
+                this.canvas.width - carnageWidth - 20, 
+                this.canvas.height - carnageHeight - 20, 
+                carnageWidth, carnageHeight);
+            ctx.restore();
+        }
         
         // Render title
         ctx.save();

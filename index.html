@@ -106,54 +106,72 @@
     
     <script type="module">
         import BattleBotsGame from './src/main.js';
-        
-        function updateLoadingStatus(message) {
-            const loadingEl = document.getElementById('loading');
-            if (loadingEl) {
-                const statusEl = loadingEl.querySelector('div:last-child');
-                if (statusEl) {
-                    statusEl.textContent = message;
-                }
-            }
-        }
+        import { LoadingScreen } from './src/ui/LoadingScreen.js';
         
         window.addEventListener('load', async () => {
+            const canvas = document.getElementById('gameCanvas');
             const loadingEl = document.getElementById('loading');
             
             try {
                 console.log('🔍 Starting game initialization...');
-                console.log('Canvas element exists?', document.getElementById('gameCanvas'));
+                console.log('Canvas element:', canvas);
                 
-                updateLoadingStatus('Creating game instance...');
+                // Hide HTML loading, show canvas with loading screen
+                loadingEl.style.display = 'none';
+                canvas.style.display = 'block';
+                
+                // Create and show loading screen
+                const loadingScreen = new LoadingScreen(canvas);
+                window.loadingScreen = loadingScreen; // For debugging
+                
+                // Animate loading screen
+                let lastTime = 0;
+                function animateLoading(time) {
+                    const deltaTime = time - lastTime;
+                    lastTime = time;
+                    
+                    loadingScreen.update(deltaTime);
+                    loadingScreen.render();
+                    
+                    if (!loadingScreen.isComplete) {
+                        requestAnimationFrame(animateLoading);
+                    }
+                }
+                requestAnimationFrame(animateLoading);
+                
+                // Update loading progress
+                loadingScreen.setProgress(10, 'Creating game instance...');
                 const game = new BattleBotsGame();
                 window.gameInstance = game; // Make accessible for debugging
                 console.log('✅ Game instance created');
                 
-                updateLoadingStatus('Initializing game systems...');
+                loadingScreen.setProgress(50, 'Initializing game systems...');
                 await game.init();
                 
-                loadingEl.style.display = 'none';
+                loadingScreen.setProgress(100, 'Ready!');
                 console.log('✅ Game loaded successfully!');
+                
+                // Wait a moment for the "Ready!" message to show
+                setTimeout(() => {
+                    // Game should now take over rendering
+                    console.log('🎮 Starting game loop...');
+                }, 1000);
                 
             } catch (error) {
                 console.error('Failed to initialize game:', error);
-                loadingEl.innerHTML = `
-                    <div class="error">
-                        <h2>Failed to load game</h2>
-                        <p>There was an error initializing Battle Bots.</p>
-                        <div class="error-details">${error.message}</div>
-                        <button onclick="location.reload()" style="
-                            margin-top: 20px;
-                            padding: 10px 20px;
-                            background: #56CCF2;
-                            border: none;
-                            color: #0f1419;
-                            font-weight: bold;
-                            cursor: pointer;
-                            border-radius: 4px;
-                        ">Reload Page</button>
-                    </div>
-                `;
+                console.error('Stack trace:', error.stack);
+                
+                // Show error on canvas
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#0f1419';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#fc8181';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Failed to load game', canvas.width / 2, canvas.height / 2 - 20);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '16px Arial';
+                ctx.fillText(error.message, canvas.width / 2, canvas.height / 2 + 20);
             }
         });
         
