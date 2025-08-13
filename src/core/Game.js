@@ -59,9 +59,9 @@ export class Game {
         };
         
         // Match objective and pacing
-        this.objective = { killsToWin: 5 };
-        this.damageScale = 0.6; // reduce damage to lengthen fights
-        this.respawnDelays = { player: 3000, ai: 2000 };
+        this.objective = { killsToWin: 8 }; // Increased for more meaningful matches
+        this.damageScale = 1.0; // Full damage for more impactful combat
+        this.respawnDelays = { player: 2000, ai: 1500 }; // Faster respawns for better pacing
         this.respawnTimers = [];
         
         // Multiplayer

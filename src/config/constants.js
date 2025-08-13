@@ -33,7 +33,7 @@ export const BOT_CLASSES = {
         name: 'Titan',
         baseStats: {
             health: 150,
-            speed: 3,
+            speed: 3.5,  // Increased from 3.0 for better responsiveness
             meleeDamage: 25,
             rangedDamage: 15,
             armor: 0.3,
@@ -44,7 +44,7 @@ export const BOT_CLASSES = {
         color: '#4a5568',
         ability: 'damageReduction',
         abilityDuration: 3000,
-        abilityCooldown: 10000,
+        abilityCooldown: 6000,  // Reduced from 10000 for more dynamic gameplay
         description: 'Heavy tank with damage reduction',
         unlocked: true,  // Starter bot
         price: 0
@@ -65,7 +65,7 @@ export const BOT_CLASSES = {
         color: '#48bb78',
         ability: 'dash',
         abilityDuration: 200,
-        abilityCooldown: 5000,
+        abilityCooldown: 3000,  // Reduced from 5000 for more dynamic gameplay
         description: 'Fast striker with dash ability',
         unlocked: true,  // Starter bot
         price: 0
@@ -86,7 +86,7 @@ export const BOT_CLASSES = {
         color: '#9f7aea',
         ability: 'drone',
         abilityDuration: 10000,
-        abilityCooldown: 15000,
+        abilityCooldown: 8000,  // Reduced from 15000 for more dynamic gameplay
         description: 'Long-range specialist with drone',
         unlocked: true,  // Starter bot
         price: 0
@@ -107,7 +107,7 @@ export const BOT_CLASSES = {
         color: '#f56565',
         ability: 'berserk',  // Increases melee damage and speed temporarily
         abilityDuration: 4000,
-        abilityCooldown: 12000,
+        abilityCooldown: 7000,  // Reduced from 12000 for more dynamic gameplay
         description: 'Melee specialist with berserk mode',
         unlocked: false,
         price: 2500
@@ -128,7 +128,7 @@ export const BOT_CLASSES = {
         color: '#805ad5',
         ability: 'cloak',  // Temporary invisibility
         abilityDuration: 3000,
-        abilityCooldown: 10000,
+        abilityCooldown: 6000,  // Reduced from 10000 for more dynamic gameplay
         description: 'Stealth assassin with cloaking device',
         unlocked: false,
         price: 3500
@@ -138,7 +138,7 @@ export const BOT_CLASSES = {
         name: 'Fortress',
         baseStats: {
             health: 200,
-            speed: 2.5,
+            speed: 3.0,  // Increased from 2.5 for better viability
             meleeDamage: 20,
             rangedDamage: 20,
             armor: 0.4,
@@ -149,7 +149,7 @@ export const BOT_CLASSES = {
         color: '#718096',
         ability: 'deployShield',  // Creates a temporary shield barrier
         abilityDuration: 5000,
-        abilityCooldown: 15000,
+        abilityCooldown: 8000,  // Reduced from 15000 for more dynamic gameplay
         description: 'Ultimate defense with deployable shields',
         unlocked: false,
         price: 4000
@@ -170,7 +170,7 @@ export const BOT_CLASSES = {
         color: '#ed8936',
         ability: 'multiShot',  // Fires multiple projectiles
         abilityDuration: 100,
-        abilityCooldown: 8000,
+        abilityCooldown: 5000,  // Reduced from 8000 for more dynamic gameplay
         description: 'Balanced fighter with multi-shot capability',
         unlocked: true,  // Starter bot (4th starter)
         price: 0
@@ -191,7 +191,7 @@ export const BOT_CLASSES = {
         color: '#38b2ac',
         ability: 'deployTurret',  // Deploys an automated turret
         abilityDuration: 8000,
-        abilityCooldown: 20000,
+        abilityCooldown: 12000,  // Reduced from 20000 for more dynamic gameplay
         description: 'Support class with deployable turrets',
         unlocked: false,
         price: 5000

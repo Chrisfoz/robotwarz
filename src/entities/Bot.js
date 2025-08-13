@@ -137,7 +137,7 @@ export class Bot {
             const desiredVy = (dy / dist) * speed;
             
             // Apply acceleration (lerp towards desired velocity)
-            const accel = this.currentStats.acceleration || 0.1;
+            const accel = this.currentStats.acceleration || 0.15;  // Increased from 0.1 for snappier movement
             this.vx = this.vx * (1 - accel) + desiredVx * accel;
             this.vy = this.vy * (1 - accel) + desiredVy * accel;
             
