@@ -19,6 +19,8 @@ import { HUDSystem as HUD } from './ui/hud.js';
 import { ShopSystem as ShopUI } from './ui/shop.js';
 import { LobbySystem as LobbyUI } from './ui/lobby.js';
 import { TutorialSystem } from './ui/Tutorial.js';
+import { ControlsOverlay } from './ui/ControlsOverlay.js';
+import { VisualFeedbackSystem } from './systems/VisualFeedback.js';
 import performanceMonitor from './utils/PerformanceMonitor.js';
 import componentDamageSystem from './systems/ComponentDamage.js';
 import screenShake from './systems/ScreenShake.js';
@@ -166,7 +168,8 @@ class BattleBotsGame {
                 hud: new HUD(this.canvas),
                 shop: new ShopUI(this.canvas),
                 lobby: new LobbyUI(this.canvas),
-                tutorial: new TutorialSystem(this.canvas)
+                tutorial: new TutorialSystem(this.canvas),
+                controls: new ControlsOverlay(this.canvas)
             };
             console.log('✅ UI systems initialized');
             
@@ -236,12 +239,37 @@ class BattleBotsGame {
             }
         });
         
-        // Performance monitoring toggle (F3)
+        // Keyboard shortcuts
         window.addEventListener('keydown', (e) => {
+            // Performance monitoring toggle (F3)
             if (e.key === 'F3') {
                 e.preventDefault();
                 const enabled = performanceMonitor.toggle();
                 console.log(`Performance monitor ${enabled ? 'enabled' : 'disabled'}`);
+            }
+            
+            // Controls overlay toggle (H)
+            if (e.key.toLowerCase() === 'h') {
+                e.preventDefault();
+                if (this.ui?.controls) {
+                    const enabled = this.ui.controls.toggleVisibility();
+                    console.log(`Controls overlay ${enabled ? 'shown' : 'hidden'}`);
+                    if (this.ui?.hud?.addNotification) {
+                        this.ui.hud.addNotification(
+                            `Controls ${enabled ? 'shown' : 'hidden'} (Press H to toggle)`,
+                            '🎮'
+                        );
+                    }
+                }
+            }
+            
+            // Cycle control style (Shift+H)
+            if (e.key === 'H' && e.shiftKey) {
+                e.preventDefault();
+                if (this.ui?.controls) {
+                    const newStyle = this.ui.controls.cycleStyle();
+                    console.log(`Controls style: ${newStyle}`);
+                }
             }
         });
         
@@ -316,6 +344,12 @@ class BattleBotsGame {
                 if (this.ui.tutorial) {
                     this.ui.tutorial.update(deltaTime);
                     this.ui.tutorial.render();
+                }
+                
+                // Render controls overlay (always visible for new players)
+                if (this.ui.controls) {
+                    this.ui.controls.update(deltaTime);
+                    this.ui.controls.render();
                 }
                 break;
                 
