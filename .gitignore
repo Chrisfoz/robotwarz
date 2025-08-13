@@ -54,3 +54,10 @@ debug/
 
 # Documentation build
 docs/_build/
+
+# Local history and agent artifacts
+.history/
+.claude/
+
+# history
+.history/
