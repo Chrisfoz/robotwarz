@@ -158,10 +158,10 @@ class BattleBotsGame {
         
         try {
             this.ui = {
-                menu: new MenuUI(this.canvas, this.ctx),
-                hud: new HUD(this.canvas, this.ctx),
-                shop: new ShopUI(this.canvas, this.ctx),
-                lobby: new LobbyUI(this.canvas, this.ctx)
+                menu: new MenuUI(this.canvas),
+                hud: new HUD(this.canvas),
+                shop: new ShopUI(this.canvas),
+                lobby: new LobbyUI(this.canvas)
             };
             console.log('✅ UI systems initialized');
             
