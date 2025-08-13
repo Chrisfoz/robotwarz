@@ -310,29 +310,6 @@ export class EffectsSystem {
         }
     }
     
-    // Back-compat aliases and helpers
-    createHitSparks(x, y) {
-        // Default angle for radial sparks
-        this.createHitSpark(x, y, 0);
-    }
-
-    createDashTrail(startX, startY, endX, endY) {
-        this.createDashStreak(startX, startY, endX, endY);
-    }
-
-    createShockwave(x, y, maxRadius = 80, color = '#FF6B1A', lifetime = 300) {
-        this.activeEffects.push({
-            type: 'shockwave',
-            x,
-            y,
-            radius: 0,
-            maxRadius,
-            alpha: 0.6,
-            lifetime,
-            color
-        });
-    }
-
     createDebris(x, y, count = 5) {
         for (let i = 0; i < count; i++) {
             const particle = this.getParticle('debris');

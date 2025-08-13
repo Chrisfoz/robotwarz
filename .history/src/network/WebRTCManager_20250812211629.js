@@ -33,7 +33,6 @@ export class WebRTCManager {
             jitter: 0,
             bandwidth: 0
         };
-        this.hadSuccessfulConnection = false;
     }
 
     /**
@@ -46,7 +45,7 @@ export class WebRTCManager {
     /**
      * Connect to signaling server
      */
-    async connectToSignalingServer(serverUrl) {
+    async connectToSignalingServer(serverUrl = 'ws://localhost:3001') {
         return new Promise((resolve, reject) => {
             // Add timeout to prevent hanging
             const timeout = setTimeout(() => {
@@ -58,16 +57,13 @@ export class WebRTCManager {
             
             try {
                 // Try local server first, then fall back to not using multiplayer
-                const urlToUse = serverUrl || this.resolveSignalingURL();
-                console.log(`📡 Attempting to connect to signaling server at ${urlToUse}...`);
-                this.signalingServer = new WebSocket(urlToUse);
+                console.log('📡 Attempting to connect to signaling server...');
+                this.signalingServer = new WebSocket(serverUrl);
                 
                 this.signalingServer.onopen = () => {
                     clearTimeout(timeout);
                     console.log('✅ Connected to signaling server');
                     this.connectionState = 'connected';
-                    this.hadSuccessfulConnection = true;
-                    this.reconnectAttempts = 0;
                     this.sendToSignalingServer({
                         type: 'register',
                         playerId: this.playerId
@@ -88,8 +84,8 @@ export class WebRTCManager {
                 this.signalingServer.onclose = () => {
                     console.log('🔌 Disconnected from signaling server');
                     this.connectionState = 'disconnected';
-                    // Attempt reconnect only if we had a successful connection before
-                    if (this.hadSuccessfulConnection) {
+                    // Don't attempt reconnect if initial connection failed
+                    if (this.reconnectAttempts > 0) {
                         this.attemptReconnect();
                     }
                 };
@@ -98,22 +94,6 @@ export class WebRTCManager {
                 reject(error);
             }
         });
-    }
-
-    /**
-     * Resolve default signaling URL: ?signal= override, else same-origin ws/wss
-     */
-    resolveSignalingURL() {
-        try {
-            const params = new URLSearchParams(globalThis.location?.search || '');
-            const override = params.get('signal');
-            if (override) return override;
-            const isHttps = globalThis.location?.protocol === 'https:';
-            const host = globalThis.location?.host || 'localhost:3001';
-            return `${isHttps ? 'wss' : 'ws'}://${host}`;
-        } catch (e) {
-            return 'ws://localhost:3001';
-        }
     }
 
     /**
@@ -222,18 +202,13 @@ export class WebRTCManager {
         const pc = new RTCPeerConnection(this.rtcConfig);
         this.peers.set(peerId, pc);
         
-        // Set up data channel (only offerer creates; answerer listens)
-        if (createOffer) {
-            const dataChannel = pc.createDataChannel('gameData', {
-                ordered: false,
-                maxRetransmits: 0
-            });
-            this.setupDataChannel(dataChannel, peerId);
-        } else {
-            pc.ondatachannel = (event) => {
-                this.setupDataChannel(event.channel, peerId);
-            };
-        }
+        // Set up data channel
+        const dataChannel = pc.createDataChannel('gameData', {
+            ordered: false,
+            maxRetransmits: 0
+        });
+        
+        this.setupDataChannel(dataChannel, peerId);
         
         // Handle ICE candidates
         pc.onicecandidate = (event) => {

@@ -19,12 +19,6 @@ export class Renderer {
         this.ctx.fillRect(0, 0, this.width, this.height);
     }
 
-    // Back-compat for callers expecting a background render
-    renderBackground() {
-        this.clear();
-        this.renderArena();
-    }
-
     renderGame(bots, projectiles, hazards, effects, playerBot) {
         // Draw arena
         this.renderArena();
@@ -633,9 +627,39 @@ export class Renderer {
     }
 
     renderMenu() {
-        // Background-only placeholder; interactive menu is handled by UI/menu.js
         this.clear();
-        this.renderArena();
+        
+        // Title
+        this.ctx.fillStyle = COLORS.PRIMARY;
+        this.ctx.font = 'bold 48px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('ROBOT WARZ', this.width / 2, 100);
+        
+        // Subtitle
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = '20px Arial';
+        this.ctx.fillText('Arena Evolution', this.width / 2, 140);
+        
+        // Menu options
+        const options = ['Play', 'Bot Select', 'Upgrades', 'Settings'];
+        options.forEach((option, index) => {
+            const y = 250 + index * 60;
+            
+            // Button background
+            this.ctx.fillStyle = COLORS.UI_BG;
+            this.ctx.fillRect(this.width / 2 - 100, y - 25, 200, 50);
+            
+            // Button text
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '24px Arial';
+            this.ctx.fillText(option, this.width / 2, y + 5);
+            
+            // Button border
+            this.ctx.strokeStyle = COLORS.UI_BORDER;
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(this.width / 2 - 100, y - 25, 200, 50);
+        });
+        
         this.ctx.textAlign = 'left';
     }
 

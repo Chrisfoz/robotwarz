@@ -605,11 +605,7 @@ export class Physics {
             const candidates = this.getPotentialCollisions(bot);
             
             candidates.forEach(other => {
-                if (other === bot) return;
-                
-                // Only consider bot-like entities (exclude projectiles and others in spatial grid)
-                const isBotLike = typeof other?.isAlive === 'function' && typeof other?.radius === 'number';
-                if (!isBotLike || !other.isAlive()) return;
+                if (other === bot || !other.isAlive()) return;
                 
                 // Create unique pair identifier
                 const pairId = bot.id < other.id ? `${bot.id}-${other.id}` : `${other.id}-${bot.id}`;

@@ -5,17 +5,6 @@ export const ARENA_CONFIG = {
     HEIGHT: 600
 };
 
-const DETECTED_DEBUG = (() => {
-    try {
-        const params = new URLSearchParams(globalThis.location?.search || '');
-        if (params.get('debug') === '1') return true;
-        const host = globalThis.location?.hostname || '';
-        return host === 'localhost' || host === '127.0.0.1';
-    } catch (e) {
-        return false;
-    }
-})();
-
 export const GAME_CONFIG = {
     CANVAS_WIDTH: 800,
     CANVAS_HEIGHT: 600,
@@ -23,7 +12,7 @@ export const GAME_CONFIG = {
     TARGET_FPS: 60,
     FIXED_TIMESTEP: 1000 / 60,
     MAX_PLAYERS: 4,
-    DEBUG_MODE: DETECTED_DEBUG
+    DEBUG_MODE: true
 };
 
 // 8 Permanent Robot Types - Base stats that can be upgraded

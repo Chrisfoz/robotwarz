@@ -37,28 +37,6 @@ export class InputHandler {
         this.canvas.oncontextmenu = () => false;
     }
 
-    // Compute CSS-to-canvas scale and offsets
-    getCanvasScale() {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        return { rect, scaleX, scaleY };
-    }
-
-    // Convert client coordinates to canvas space (respecting CSS transforms)
-    toCanvasCoords(clientX, clientY) {
-        const { rect, scaleX, scaleY } = this.getCanvasScale();
-        return {
-            x: (clientX - rect.left) * scaleX,
-            y: (clientY - rect.top) * scaleY
-        };
-    }
-
-    // No-op update to satisfy game loop compatibility
-    update() {
-        // Intentionally empty
-    }
-
     handleKeyDown(event) {
         const key = event.key.toLowerCase();
         this.keys.set(key, true);
@@ -74,12 +52,6 @@ export class InputHandler {
                 break;
             case 'r':
                 this.emit('restart');
-                break;
-            case 'm':
-                this.emit('menu');
-                break;
-            case 'M':
-                this.emit('menu');
                 break;
             case 'w':
             case 'arrowup':
@@ -106,9 +78,9 @@ export class InputHandler {
     }
 
     handleMouseDown(event) {
-        const pos = this.toCanvasCoords(event.clientX, event.clientY);
-        this.mouse.x = pos.x;
-        this.mouse.y = pos.y;
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = event.clientX - rect.left;
+        this.mouse.y = event.clientY - rect.top;
         this.mouse.buttons.add(event.button);
         
         if (event.button === 0) { // Left click
@@ -119,9 +91,6 @@ export class InputHandler {
         
         // Also emit move event for click-to-move
         this.emit('move', this.mouse.x, this.mouse.y);
-
-        // Generic click event for UI hit-testing
-        this.emit('click', this.mouse.x, this.mouse.y);
     }
 
     handleMouseUp(event) {
@@ -135,9 +104,9 @@ export class InputHandler {
     }
 
     handleMouseMove(event) {
-        const pos = this.toCanvasCoords(event.clientX, event.clientY);
-        this.mouse.x = pos.x;
-        this.mouse.y = pos.y;
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = event.clientX - rect.left;
+        this.mouse.y = event.clientY - rect.top;
         
         // If left button is held, update movement target
         if (this.mouse.buttons.has(0)) {
@@ -147,12 +116,12 @@ export class InputHandler {
 
     handleTouchStart(event) {
         event.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
         const touch = event.touches[0];
-        const pos = this.toCanvasCoords(touch.clientX, touch.clientY);
         
         this.touch.active = true;
-        this.touch.x = pos.x;
-        this.touch.y = pos.y;
+        this.touch.x = touch.clientX - rect.left;
+        this.touch.y = touch.clientY - rect.top;
         
         // Treat touch as movement and primary attack
         this.emit('move', this.touch.x, this.touch.y);
@@ -169,11 +138,11 @@ export class InputHandler {
         event.preventDefault();
         if (!this.touch.active) return;
         
+        const rect = this.canvas.getBoundingClientRect();
         const touch = event.touches[0];
-        const pos = this.toCanvasCoords(touch.clientX, touch.clientY);
         
-        this.touch.x = pos.x;
-        this.touch.y = pos.y;
+        this.touch.x = touch.clientX - rect.left;
+        this.touch.y = touch.clientY - rect.top;
         
         this.emit('move', this.touch.x, this.touch.y);
     }

@@ -177,17 +177,10 @@ class BattleBotsGame {
             }
             
             this.ui.lobby.onStartGame = (config) => this.startMultiplayer(config);
-            // Ensure leaving the lobby returns to the main menu
-            this.ui.lobby.onLeaveLobby = () => this.showMenu();
+            this.ui.lobby.onBack = () => this.showMenu();
             
-            // Shop close/back to menu
-            this.ui.shop.onClose = () => this.showMenu();
+            this.ui.shop.onBack = () => this.showMenu();
             this.ui.shop.onPurchase = (upgrade) => this.purchaseUpgrade(upgrade);
-
-            // HUD back button -> return to main menu
-            if (this.ui.hud) {
-                this.ui.hud.onBack = () => this.showMenu();
-            }
         } catch (error) {
             console.error('❌ Failed to initialize UI:', error);
             throw error;
@@ -226,13 +219,6 @@ class BattleBotsGame {
     setupEventListeners() {
         this.systems.input.on('pause', () => this.togglePause());
         this.systems.input.on('menu', () => this.showMenu());
-
-        // Delegate canvas clicks to HUD for back button handling during gameplay
-        this.systems.input.on('click', (x, y) => {
-            if (this.gameState === 'PLAYING' && this.ui?.hud?.handleClick) {
-                this.ui.hud.handleClick(x, y);
-            }
-        });
         
         // Performance monitoring toggle (F3)
         window.addEventListener('keydown', (e) => {
@@ -330,47 +316,57 @@ class BattleBotsGame {
         this.systems.input.update();
         this.systems.game.update(deltaTime);
         
-        // Let Game manage internal updates (physics, collisions, entities)
-        // Already invoked above: this.systems.game.update(deltaTime);
-
-        // Update HUD with current game state
-        const gameState = this.systems.game.getGameState ? this.systems.game.getGameState() : null;
-        if (gameState && this.ui?.hud?.setGameData) {
-            this.ui.hud.setGameData(gameState);
-            this.ui.hud.setPlayerBot(gameState.playerBot);
-        }
-        if (this.ui?.hud?.update) {
-            this.ui.hud.update(deltaTime);
-        }
-
+        performanceMonitor.startTimer('physics');
+        this.systems.physics.update(deltaTime);
+        performanceMonitor.endTimer('physics');
+        
+        performanceMonitor.startTimer('collision');
+        this.systems.collision.update(this.systems.game.getEntities());
+        performanceMonitor.endTimer('collision');
+        
+        this.systems.combat.update(deltaTime);
+        this.systems.effects.update(deltaTime);
+        this.systems.projectiles.update(deltaTime);
+        this.systems.hazards.update(deltaTime);
+        this.systems.particles.update(deltaTime);
+        enhancedParticles.update(deltaTime);
+        componentDamageSystem.update(deltaTime);
+        screenShake.update(deltaTime);
+        this.systems.abilities.update(deltaTime);
+        this.systems.progression.update(deltaTime);
+        
         performanceMonitor.endTimer('update');
+        
+        // Update performance counters
+        performanceMonitor.updateCounts(
+            this.systems.game.getEntities().length,
+            this.systems.particles.getCount() + enhancedParticles.getCount(),
+            this.systems.projectiles.getProjectiles().length
+        );
     }
 
     render(interpolation) {
         performanceMonitor.startTimer('render');
         
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Background
-        if (this.systems.renderer.renderBackground) {
-            this.systems.renderer.renderBackground();
-        }
-
-        // Delegate full scene rendering to Game
-        if (typeof this.systems.game.render === 'function') {
-            this.systems.game.render();
-        }
-
-        // HUD data and render
-        const gameState = this.systems.game.getGameState ? this.systems.game.getGameState() : null;
-        if (gameState && this.ui?.hud?.setGameData) {
-            this.ui.hud.setGameData(gameState);
-            this.ui.hud.setPlayerBot(gameState.playerBot);
-        }
-        if (typeof this.ui?.hud?.render === 'function') {
-            this.ui.hud.render();
-        }
-
+        
+        // Apply screen shake
+        screenShake.apply(this.ctx);
+        
+        this.systems.renderer.renderBackground();
+        this.systems.hazards.render(this.ctx);
+        this.systems.projectiles.render(this.ctx);
+        this.systems.game.render(this.ctx, interpolation);
+        this.systems.particles.render(this.ctx);
+        enhancedParticles.render(this.ctx);
+        componentDamageSystem.renderDebris(this.ctx);
+        this.systems.effects.render(this.ctx);
+        
+        // Restore after shake
+        screenShake.restore(this.ctx);
+        
+        this.ui.hud.render(this.systems.game.getGameState());
+        
         this.renderDebugInfo();
         
         performanceMonitor.endTimer('render');
@@ -538,8 +534,7 @@ class BattleBotsGame {
             this.ui.lobby.setRoomCode('LOCAL');
         }
         
-        this.ui.lobby.activate();
-        this.ui.lobby.activate();
+        this.ui.lobby.show();
     }
     
     async joinLobby(roomCode) {
@@ -561,7 +556,7 @@ class BattleBotsGame {
     showShop() {
         this.gameState = 'SHOP';
         if (this.ui?.menu?.deactivate) this.ui.menu.deactivate();
-        this.ui.shop.open();
+        this.ui.shop.show();
     }
 
     showSettings() {

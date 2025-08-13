@@ -75,12 +75,6 @@ export class InputHandler {
             case 'r':
                 this.emit('restart');
                 break;
-            case 'm':
-                this.emit('menu');
-                break;
-            case 'M':
-                this.emit('menu');
-                break;
             case 'w':
             case 'arrowup':
                 this.emit('moveUp');
@@ -119,9 +113,6 @@ export class InputHandler {
         
         // Also emit move event for click-to-move
         this.emit('move', this.mouse.x, this.mouse.y);
-
-        // Generic click event for UI hit-testing
-        this.emit('click', this.mouse.x, this.mouse.y);
     }
 
     handleMouseUp(event) {

@@ -183,11 +183,6 @@ class BattleBotsGame {
             // Shop close/back to menu
             this.ui.shop.onClose = () => this.showMenu();
             this.ui.shop.onPurchase = (upgrade) => this.purchaseUpgrade(upgrade);
-
-            // HUD back button -> return to main menu
-            if (this.ui.hud) {
-                this.ui.hud.onBack = () => this.showMenu();
-            }
         } catch (error) {
             console.error('❌ Failed to initialize UI:', error);
             throw error;
@@ -226,13 +221,6 @@ class BattleBotsGame {
     setupEventListeners() {
         this.systems.input.on('pause', () => this.togglePause());
         this.systems.input.on('menu', () => this.showMenu());
-
-        // Delegate canvas clicks to HUD for back button handling during gameplay
-        this.systems.input.on('click', (x, y) => {
-            if (this.gameState === 'PLAYING' && this.ui?.hud?.handleClick) {
-                this.ui.hud.handleClick(x, y);
-            }
-        });
         
         // Performance monitoring toggle (F3)
         window.addEventListener('keydown', (e) => {
@@ -538,8 +526,7 @@ class BattleBotsGame {
             this.ui.lobby.setRoomCode('LOCAL');
         }
         
-        this.ui.lobby.activate();
-        this.ui.lobby.activate();
+        this.ui.lobby.show();
     }
     
     async joinLobby(roomCode) {
@@ -561,7 +548,7 @@ class BattleBotsGame {
     showShop() {
         this.gameState = 'SHOP';
         if (this.ui?.menu?.deactivate) this.ui.menu.deactivate();
-        this.ui.shop.open();
+        this.ui.shop.show();
     }
 
     showSettings() {

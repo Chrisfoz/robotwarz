@@ -201,9 +201,6 @@ export class Game {
     }
 
     startMatch(configOrBotClass = 'TITAN', isMultiplayer = false) {
-        // Enter playing state
-        this.state = GAME_STATES.PLAYING;
-
         // Clear entities
         this.bots = [];
         this.projectiles = [];
@@ -270,17 +267,13 @@ export class Game {
                 for (let i = 0; i < 3; i++) {
                     const aiClasses = ['TITAN', 'VIPER', 'SNIPER', 'STRIKER'];
                     const randomClass = aiClasses[Math.floor(Math.random() * aiClasses.length)];
-                const aiBot = new Bot(
-                    Math.random() * this.width,
-                    Math.random() * this.height,
-                    randomClass,
-                    `ai_${i}`
-                );
-                this.bots.push(aiBot);
-                // Give AI an initial target so they begin moving immediately
-                if (this.playerBot) {
-                    aiBot.setTarget(this.playerBot.x, this.playerBot.y);
-                }
+                    const aiBot = new Bot(
+                        Math.random() * this.width,
+                        Math.random() * this.height,
+                        randomClass,
+                        `ai_${i}`
+                    );
+                    this.bots.push(aiBot);
                 }
             }
         }
@@ -571,11 +564,12 @@ export class Game {
         // Update bots (AI and game logic)
         this.bots.forEach(bot => {
             if (bot.isAlive()) {
-                // Run AI first so targets apply immediately this frame
+                bot.update(deltaTime, arena);
+                
+                // Simple AI for non-player bots
                 if (bot !== this.playerBot) {
                     this.updateAI(bot);
                 }
-                bot.update(deltaTime, arena);
             }
         });
         
@@ -644,12 +638,6 @@ export class Game {
             bot.setTarget(
                 bot.x - Math.cos(angle) * 100,
                 bot.y - Math.sin(angle) * 100
-            );
-        } else {
-            // Mid-range: strafe around the target to keep action going
-            bot.setTarget(
-                nearestEnemy.x + Math.cos(angle + Math.PI / 2) * 80,
-                nearestEnemy.y + Math.sin(angle + Math.PI / 2) * 80
             );
         }
         
@@ -823,52 +811,5 @@ export class Game {
      */
     getPhysicsDebugInfo() {
         return this.physics.getDebugInfo();
-    }
-
-    // Provide a minimal, serializable game state snapshot for UI/HUD
-    getGameState() {
-        const botsState = this.bots.map(b => ({
-            id: b.id,
-            playerId: b.playerId,
-            className: b.className,
-            position: { x: b.x, y: b.y },
-            rotation: b.angle,
-            team: b.playerId && typeof b.playerId === 'string' && b.playerId.startsWith('ai') ? 'ai' : 'player',
-            health: b.health,
-            maxHealth: b.maxHealth
-        }));
-
-        return {
-            state: this.state,
-            arenaWidth: this.width,
-            arenaHeight: this.height,
-            bots: botsState,
-            playerBot: this.playerBot || null,
-            // Optional fields used by HUD; provide safe defaults
-            score: this.matchData?.kills || 0,
-            kills: this.matchData?.kills || 0,
-            deaths: this.matchData?.deaths || 0,
-            matchTime: this.matchData?.endTime
-                ? (this.matchData.endTime - this.matchData.startTime)
-                : (Date.now() - (this.matchData?.startTime || Date.now())),
-            abilities: {
-                primary: { name: 'Primary', ready: true },
-                secondary: { name: 'Secondary', ready: true }
-            },
-            progression: {
-                level: this.playerProfile?.level || 1,
-                xp: this.playerProfile?.xp || 0,
-                nextLevelXP: 1000
-            },
-            players: botsState
-        };
-    }
-
-    // Summary for game-over screen
-    getMatchStats() {
-        const duration = (this.matchData?.endTime || Date.now()) - (this.matchData?.startTime || Date.now());
-        const totalKills = this.matchData?.kills || 0;
-        const winner = this.playerBot && this.playerBot.isAlive && this.playerBot.isAlive() ? 'Player' : 'AI';
-        return { duration, totalKills, winner };
     }
 }

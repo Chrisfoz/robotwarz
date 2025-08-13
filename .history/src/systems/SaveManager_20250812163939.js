@@ -4,59 +4,6 @@ export class SaveManager {
     constructor() {
         this.storageKey = 'robotwarz_save';
         this.settingsKey = 'robotwarz_settings';
-        this.profile = null;
-        this.settings = null;
-    }
-
-    /**
-     * Backward-compatible wrapper for legacy API
-     * Loads profile and settings into memory and returns them.
-     */
-    loadGame() {
-        try {
-            if (typeof localStorage === 'undefined') {
-                console.warn('localStorage not available, skipping loadGame()');
-                this.profile = this.getDefaultProfile();
-                this.settings = this.getDefaultSettings();
-                return { profile: this.profile, settings: this.settings };
-            }
-            this.profile = this.loadProfile();
-            this.settings = this.loadSettings();
-
-            // Optionally enable autosave if settings request it
-            if (this.settings?.autoSave) {
-                this.enableAutoSave();
-            }
-
-            return { profile: this.profile, settings: this.settings };
-        } catch (error) {
-            console.error('Failed to load game state:', error);
-            this.profile = this.getDefaultProfile();
-            this.settings = this.getDefaultSettings();
-            return { profile: this.profile, settings: this.settings };
-        }
-    }
-
-    /**
-     * Backward-compatible wrapper for legacy API
-     * Saves current in-memory profile/settings (or loads defaults) to storage.
-     */
-    saveGame() {
-        try {
-            if (typeof localStorage === 'undefined') {
-                console.warn('localStorage not available, skipping saveGame()');
-                return false;
-            }
-            const profileToSave = this.profile || this.loadProfile();
-            const settingsToSave = this.settings || this.loadSettings();
-
-            const ok1 = this.saveProfile(profileToSave);
-            const ok2 = this.saveSettings(settingsToSave);
-            return ok1 && ok2;
-        } catch (error) {
-            console.error('Failed to save game state:', error);
-            return false;
-        }
     }
 
     // Load player profile

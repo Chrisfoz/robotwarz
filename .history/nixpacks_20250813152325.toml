@@ -6,8 +6,8 @@
 nixPkgs = ["nodejs-18_x", "yarn"]
 
 [phases.install]
-# Install project dependencies for the combined Node server (production-only)
-cmds = ["npm ci --omit=dev"]
+# No extra global installs needed; the app runs via Node server
+cmds = ["echo 'No global installs required'"]
 
 [phases.build]
 # No build step needed - static files are ready to serve

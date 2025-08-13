@@ -20,9 +20,7 @@ export class HUDSystem {
             damageIndicator: true,
             xpBar: true,
             notifications: true,
-            playerList: true,
-            controls: true,
-            backButton: true
+            playerList: true
         };
         
         // Visual settings
@@ -171,10 +169,6 @@ export class HUDSystem {
         if (this.elements.speedometer) this.renderSpeedometer();
         if (this.elements.xpBar) this.renderXPBar();
         if (this.elements.playerList) this.renderPlayerList();
-
-        // Small guidance panel and back button
-        if (this.elements.controls) this.renderControlsHint();
-        if (this.elements.backButton) this.renderBackButton();
         
         // Render floating elements
         this.renderDamageNumbers();
@@ -552,70 +546,6 @@ export class HUDSystem {
         );
     }
     
-    renderControlsHint() {
-        const ctx = this.ctx;
-        const width = 190;
-        const height = 140;
-        const x = this.canvas.width - width - this.layout.padding;
-        const y = this.canvas.height / 2 - height / 2;
-
-        // Background
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-        ctx.fillRect(x, y, width, height);
-
-        // Border
-        ctx.strokeStyle = this.colors.border;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, width, height);
-
-        // Title
-        ctx.font = this.fonts.small;
-        ctx.fillStyle = this.colors.text;
-        ctx.textAlign = 'left';
-        ctx.fillText('Controls', x + 10, y + 20);
-
-        // Lines
-        ctx.font = this.fonts.tiny;
-        ctx.fillStyle = this.colors.textDim;
-        const lines = [
-            'Move: WASD or Click',
-            'Aim: Mouse',
-            'Primary: Left Click',
-            'Secondary: Right Click',
-            'Ability: Space',
-            'Pause: ESC',
-            'Menu: M'
-        ];
-        lines.forEach((t, i) => ctx.fillText(t, x + 10, y + 40 + i * 16));
-    }
-
-    renderBackButton() {
-        const ctx = this.ctx;
-        const w = 100;
-        const h = 28;
-        const x = this.canvas.width - this.layout.padding - w;
-        const y = this.layout.padding;
-
-        // Button background
-        ctx.fillStyle = this.colors.background;
-        ctx.fillRect(x, y, w, h);
-
-        // Border
-        ctx.strokeStyle = this.colors.primary;
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(x, y, w, h);
-
-        // Text
-        ctx.font = this.fonts.small;
-        ctx.fillStyle = this.colors.text;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Menu', x + w / 2, y + h / 2);
-
-        // Cache rect for hit-testing this frame
-        this._backBtnRect = { x, y, w, h };
-    }
-
     renderPlayerList() {
         if (!this.gameData.players || this.gameData.players.length <= 1) return;
         
@@ -749,21 +679,6 @@ export class HUDSystem {
         });
     }
     
-    handleClick(x, y) {
-        // Back button click area
-        const rect = this._backBtnRect || {
-            x: this.canvas.width - this.layout.padding - 100,
-            y: this.layout.padding,
-            w: 100,
-            h: 28
-        };
-        if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
-            if (typeof this.onBack === 'function') {
-                this.onBack();
-            }
-        }
-    }
-
     renderLowHealthOverlay() {
         const ctx = this.ctx;
         const healthPercent = this.playerBot.health / this.playerBot.maxHealth;

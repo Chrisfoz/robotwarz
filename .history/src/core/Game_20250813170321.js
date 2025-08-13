@@ -571,11 +571,12 @@ export class Game {
         // Update bots (AI and game logic)
         this.bots.forEach(bot => {
             if (bot.isAlive()) {
-                // Run AI first so targets apply immediately this frame
+                bot.update(deltaTime, arena);
+                
+                // Simple AI for non-player bots
                 if (bot !== this.playerBot) {
                     this.updateAI(bot);
                 }
-                bot.update(deltaTime, arena);
             }
         });
         
@@ -839,7 +840,6 @@ export class Game {
         }));
 
         return {
-            state: this.state,
             arenaWidth: this.width,
             arenaHeight: this.height,
             bots: botsState,

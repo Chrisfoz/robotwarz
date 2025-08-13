@@ -115,11 +115,6 @@ export class ShopSystem {
         this.canvas.removeEventListener('mousemove', this.boundHandlers.mousemove);
         this.canvas.removeEventListener('mousedown', this.boundHandlers.mousedown);
         this.canvas.removeEventListener('wheel', this.boundHandlers.wheel);
-
-        // Notify host to navigate back if provided
-        if (typeof this.onClose === 'function') {
-            this.onClose();
-        }
     }
     
     handleKeyDown(e) {
@@ -169,32 +164,6 @@ export class ShopSystem {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
-        // Top bar hit targets
-        const panelX = this.layout.padding;
-        const panelY = this.layout.padding;
-        const panelWidth = this.canvas.width - this.layout.padding * 2;
-
-        // Back label hitbox (top-left)
-        const backX = panelX + 10;
-        const backY = panelY + 15;
-        const backW = 120;
-        const backH = 30;
-        if (x >= backX && x <= backX + backW &&
-            y >= backY && y <= backY + backH) {
-            this.close();
-            return;
-        }
-
-        // Close 'X' hitbox (top-right)
-        const closeW = 30, closeH = 30;
-        const closeX = panelX + panelWidth - 40;
-        const closeY = panelY + 15;
-        if (x >= closeX && x <= closeX + closeW &&
-            y >= closeY && y <= closeY + closeH) {
-            this.close();
-            return;
-        }
         
         // Check category tabs
         this.checkCategoryClick(x, y);
@@ -313,13 +282,9 @@ export class ShopSystem {
         ctx.textAlign = 'center';
         ctx.fillText('UPGRADE SHOP', this.canvas.width / 2, panelY + 40);
         
-        // Back button (top-left)
+        // Close button
         ctx.font = this.fonts.subtitle;
         ctx.fillStyle = this.colors.text;
-        ctx.textAlign = 'left';
-        ctx.fillText('← Back', panelX + 20, panelY + 35);
-
-        // Close button (top-right)
         ctx.textAlign = 'right';
         ctx.fillText('✕', panelX + panelWidth - 20, panelY + 35);
     }

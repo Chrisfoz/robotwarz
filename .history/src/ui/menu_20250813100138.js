@@ -14,7 +14,7 @@ export class MenuSystem {
         // Menu options
         this.menus = {
             MAIN: {
-                title: '',
+                title: 'BATTLE BOTS: ARENA EVOLUTION',
                 options: [
                     { text: 'Single Player', action: 'START_SINGLE' },
                     { text: 'Multiplayer', action: 'MULTIPLAYER_MENU' },
@@ -261,19 +261,15 @@ export class MenuSystem {
     
     handleMouseMove(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         const menu = this.menus[this.currentMenu];
         if (!menu) return;
-
-        const startY = this.getOptionsStartY(this.currentMenu);
         
         // Check if mouse is over any option
         menu.options.forEach((option, index) => {
-            const optionY = startY + index * this.layout.optionSpacing;
+            const optionY = this.layout.optionsStartY + index * this.layout.optionSpacing;
             const optionX = this.canvas.width / 2 - this.layout.optionWidth / 2;
             
             if (x >= optionX && x <= optionX + this.layout.optionWidth &&
@@ -288,27 +284,20 @@ export class MenuSystem {
     
     handleMouseDown(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
         const menu = this.menus[this.currentMenu];
         if (!menu) return;
-
-        const startY = this.getOptionsStartY(this.currentMenu);
         
-        // Check if click is on any option
-        menu.options.forEach((option, index) => {
-            const optionY = startY + index * this.layout.optionSpacing;
-            const optionX = this.canvas.width / 2 - this.layout.optionWidth / 2;
-            
-            if (x >= optionX && x <= optionX + this.layout.optionWidth &&
-                y >= optionY && y <= optionY + this.layout.optionHeight) {
-                this.selectedIndex = index;
-                this.selectOption(index);
-            }
-        });
+        // Check if click is on selected option
+        const optionY = this.layout.optionsStartY + this.selectedIndex * this.layout.optionSpacing;
+        const optionX = this.canvas.width / 2 - this.layout.optionWidth / 2;
+        
+        if (x >= optionX && x <= optionX + this.layout.optionWidth &&
+            y >= optionY && y <= optionY + this.layout.optionHeight) {
+            this.selectOption(this.selectedIndex);
+        }
     }
     
     selectOption(index) {
@@ -431,19 +420,6 @@ export class MenuSystem {
         });
     }
     
-    getOptionsStartY(menuName) {
-        const base = this.layout.optionsStartY;
-        if (menuName === 'MAIN' && this.logo && this.logo.complete) {
-            const maxLogoWidth = this.canvas.width * 0.5;
-            const scaleByWidth = maxLogoWidth / this.logo.naturalWidth;
-            const desiredScale = Math.max(0.2, Math.min(0.35, scaleByWidth));
-            const logoHeight = this.logo.naturalHeight * desiredScale;
-            const belowLogo = 40 + logoHeight + 40; // top margin + logo + spacing
-            return Math.max(base, belowLogo);
-        }
-        return base;
-    }
-    
     render() {
         const ctx = this.ctx;
         
@@ -495,18 +471,14 @@ export class MenuSystem {
         
         const ctx = this.ctx;
         
-        // Draw logo prominently centered above options (main menu only)
+        // Draw logo in top-left corner if loaded (main menu only)
         if (menuName === 'MAIN' && this.logo && this.logo.complete) {
             ctx.save();
-            const maxLogoWidth = this.canvas.width * 0.5;
-            const scaleByWidth = maxLogoWidth / this.logo.naturalWidth;
-            const desiredScale = Math.max(0.2, Math.min(0.35, scaleByWidth));
-            const logoWidth = this.logo.naturalWidth * desiredScale;
-            const logoHeight = this.logo.naturalHeight * desiredScale;
-            const logoX = (this.canvas.width - logoWidth) / 2;
-            const logoY = 40;
-            ctx.globalAlpha = 1.0; // no fade
-            ctx.drawImage(this.logo, logoX, logoY, logoWidth, logoHeight);
+            ctx.globalAlpha = 0.8;
+            const logoScale = 0.15;
+            const logoWidth = this.logo.naturalWidth * logoScale;
+            const logoHeight = this.logo.naturalHeight * logoScale;
+            ctx.drawImage(this.logo, 20, 20, logoWidth, logoHeight);
             ctx.restore();
         }
         
@@ -524,34 +496,29 @@ export class MenuSystem {
             ctx.restore();
         }
         
-        // Render title (optional)
-        if (menu.title) {
-            ctx.save();
-            ctx.font = this.fonts.title;
-            ctx.fillStyle = this.colors.primary;
-            ctx.textAlign = 'center';
-            ctx.shadowColor = this.colors.accent;
-            ctx.shadowBlur = 20;
-            
-            // Animate title
-            const titleY = this.layout.titleY + Math.sin(this.animationTime * 0.002) * 5;
-            ctx.fillText(menu.title, this.canvas.width / 2, titleY);
-            ctx.restore();
-        }
+        // Render title
+        ctx.save();
+        ctx.font = this.fonts.title;
+        ctx.fillStyle = this.colors.primary;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = this.colors.accent;
+        ctx.shadowBlur = 20;
         
-        // Compute options start Y (avoid overlap with logo on MAIN)
-        const startY = this.getOptionsStartY(menuName);
-
+        // Animate title
+        const titleY = this.layout.titleY + Math.sin(this.animationTime * 0.002) * 5;
+        ctx.fillText(menu.title, this.canvas.width / 2, titleY);
+        ctx.restore();
+        
         // Render options
         menu.options.forEach((option, index) => {
-            this.renderOption(option, index, startY);
+            this.renderOption(option, index);
         });
     }
     
-    renderOption(option, index, baseY) {
+    renderOption(option, index) {
         const ctx = this.ctx;
         const isSelected = index === this.selectedIndex;
-        const optionY = baseY + index * this.layout.optionSpacing;
+        const optionY = this.layout.optionsStartY + index * this.layout.optionSpacing;
         const optionX = this.canvas.width / 2;
         
         ctx.save();

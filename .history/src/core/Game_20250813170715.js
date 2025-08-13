@@ -839,7 +839,6 @@ export class Game {
         }));
 
         return {
-            state: this.state,
             arenaWidth: this.width,
             arenaHeight: this.height,
             bots: botsState,
