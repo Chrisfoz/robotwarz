@@ -28,10 +28,10 @@ export class InputHandler {
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
         
-        // Touch events for mobile
-        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
-        this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        // Touch events for mobile (passive for better performance)
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+        this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: true });
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         
         // Prevent right-click context menu
         this.canvas.oncontextmenu = () => false;

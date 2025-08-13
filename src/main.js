@@ -562,11 +562,6 @@ class BattleBotsGame {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new BattleBotsGame();
-    game.init().catch(error => {
-        console.error('❌ Failed to initialize game:', error);
-    });
-});
-
+// Export the game class for use in index.html
+// Do not auto-initialize here as index.html handles initialization
 export default BattleBotsGame;

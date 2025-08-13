@@ -1,5 +1,8 @@
 export class EffectsSystem {
     constructor(canvas) {
+        if (!canvas) {
+            throw new Error('EffectsSystem requires a canvas element');
+        }
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
